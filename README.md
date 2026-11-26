@@ -1,5 +1,11 @@
 # Complete Web App Boilerplate
 
+## Current Status
+
+Developing...
+
+## Description
+
 A starter project for building full-stack web applications. It brings a public-facing website, an admin dashboard, and a backend API into one workspace. It includes reusable UI components and common features such as account registration, sign-in, email verification, password reset, and role-based access control.
 
 ## Technology Stack
