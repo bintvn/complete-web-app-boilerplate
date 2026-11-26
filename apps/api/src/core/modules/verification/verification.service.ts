@@ -4,11 +4,11 @@ import { BaseService } from '../../base.service.js';
 import type { UserEntity } from '../user/entities/user.entity.js';
 import type { VerificationEntity } from './entities/verification.entity.js';
 
-const CODE_TTL_MINUTES = 10;
-const MAX_FAILED_ATTEMPTS = 5;
-const SEND_COOLDOWN_MS = 60_000;
-const SEND_WINDOW_MS = 3_600_000;
-const MAX_SENDS_PER_WINDOW = 5;
+// const CODE_TTL_MINUTES = 10;
+// const MAX_FAILED_ATTEMPTS = 5;
+// const SEND_COOLDOWN_MS = 60_000;
+// const SEND_WINDOW_MS = 3_600_000;
+// const MAX_SENDS_PER_WINDOW = 5;
 
 export type VerificationTarget = {
   userId: UserEntity['id'];
@@ -16,12 +16,21 @@ export type VerificationTarget = {
   destination: string;
 };
 
+export type VerificationServiceOptions = {
+  otpSecret: string;
+  codeTtlMinutes: number;
+  maxFailedAttempts: number;
+  sendCooldownMs: number;
+  sendWindowMs: number;
+  maxSendsPerWindow: number;
+};
+
 export default class VerificationService extends BaseService<VerificationEntity> {
   readonly name = 'verification';
 
   constructor(
     repository: Repository<VerificationEntity>,
-    private readonly secret: string
+    private readonly options: VerificationServiceOptions
   ) {
     super(repository);
   }
@@ -32,12 +41,14 @@ export default class VerificationService extends BaseService<VerificationEntity>
     const previous = await this.findChallenge(target, manager);
     const now = Date.now();
     const issuedAtHistory = (previous?.issuedAtHistory ?? []).filter(
-      (issuedAt) => issuedAt > now - SEND_WINDOW_MS
+      (issuedAt) => issuedAt > now - this.options.sendWindowMs
     );
 
     if (
-      issuedAtHistory.length >= MAX_SENDS_PER_WINDOW ||
-      issuedAtHistory.some((issuedAt) => issuedAt > now - SEND_COOLDOWN_MS)
+      issuedAtHistory.length >= this.options.maxSendsPerWindow ||
+      issuedAtHistory.some(
+        (issuedAt) => issuedAt > now - this.options.sendCooldownMs
+      )
     ) {
       return null;
     }
@@ -57,13 +68,13 @@ export default class VerificationService extends BaseService<VerificationEntity>
       });
     challenge.destination = target.destination;
     challenge.codeDigest = codeDigest;
-    challenge.expiresAt = new Date(now + CODE_TTL_MINUTES * 60_000);
+    challenge.expiresAt = new Date(now + this.options.codeTtlMinutes * 60_000);
     challenge.consumedAt = null;
     challenge.failedAttempts = 0;
     challenge.issuedAtHistory = [...issuedAtHistory, now];
     await repository.save(challenge);
 
-    return { code, expiresInMinutes: CODE_TTL_MINUTES };
+    return { code, expiresInMinutes: this.options.codeTtlMinutes };
   }
 
   // Returning false lets the caller commit the failed attempt before sending an HTTP error.
@@ -81,7 +92,7 @@ export default class VerificationService extends BaseService<VerificationEntity>
       challenge.destination !== target.destination ||
       challenge.consumedAt !== null ||
       challenge.expiresAt <= now ||
-      challenge.failedAttempts >= MAX_FAILED_ATTEMPTS
+      challenge.failedAttempts >= this.options.maxFailedAttempts
     ) {
       return false;
     }
@@ -109,7 +120,7 @@ export default class VerificationService extends BaseService<VerificationEntity>
   }
 
   private digest(target: VerificationTarget, code: string): string {
-    return createHmac('sha256', this.secret)
+    return createHmac('sha256', this.options.otpSecret)
       .update(
         JSON.stringify([
           target.userId,

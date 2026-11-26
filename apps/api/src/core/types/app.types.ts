@@ -61,10 +61,39 @@ export interface AppConfig {
      * @default api
      */
     audience: string;
-    /**
-     * HMAC secret for verification codes.
-     */
-    otpSecret: string | undefined;
+    verification: {
+      /**
+       * HMAC secret for verification codes.
+       * @type {string | undefined}
+       * @default undefined
+       */
+      otpSecret: string | undefined;
+      /**
+       * @type {number}
+       * @default 10
+       */
+      codeTtlMinutes: number;
+      /**
+       * @type {number}
+       * @default 5
+       */
+      maxFailedAttempts: number;
+      /**
+       * @type {number}
+       * @default 60000
+       */
+      sendCooldownMs: number;
+      /**
+       * @type {number}
+       * @default 3600000
+       */
+      sendWindowMs: number;
+      /**
+       * @type {number}
+       * @default 5
+       */
+      maxSendsPerWindow: number;
+    };
   };
   database: {
     /**

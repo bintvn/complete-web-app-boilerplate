@@ -1,7 +1,7 @@
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { createAuthRouter } from './auth.routes.js';
-import type EmailService from '../email/email.service.js';
+import type MailService from '../mail/mail.service.js';
 import type UserService from '../user/user.service.js';
 import type RoleService from '../role/role.service.js';
 import type SessionService from '../session/session.service.js';
@@ -12,7 +12,7 @@ import { type AuthMiddleware } from '../../middlewares/auth.middleware.js';
 import type { AppConfig } from '../../types/app.types.js';
 
 export interface AuthModuleDependencies {
-  emailService: EmailService;
+  mailService: MailService;
   userService: UserService;
   roleService: RoleService;
   sessionService: SessionService;

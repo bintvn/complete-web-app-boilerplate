@@ -22,7 +22,7 @@ import type {
 import type UserService from '../user/user.service.js';
 import type RoleService from '../role/role.service.js';
 import type { RoleEntity } from '../role/entities/role.entity.js';
-import type EmailService from '../email/email.service.js';
+import type MailService from '../mail/mail.service.js';
 import type { AuthModuleDependencies } from './index.js';
 import type { UserEntity } from '../user/entities/user.entity.js';
 import type { SessionEntity } from '../session/entities/session.entity.js';
@@ -35,7 +35,7 @@ const EMAIL_VERIFICATION_PURPOSE = 'verify_email';
 
 export class AuthService extends CoreBaseService {
   public readonly name = 'auth';
-  private readonly emailService: EmailService;
+  private readonly mailService: MailService;
   private readonly sessionService: SessionService;
   private readonly userService: UserService;
   private readonly roleService: RoleService;
@@ -47,7 +47,7 @@ export class AuthService extends CoreBaseService {
   ) {
     super();
 
-    this.emailService = dependencies.emailService;
+    this.mailService = dependencies.mailService;
     this.sessionService = dependencies.sessionService;
     this.userService = dependencies.userService;
     this.roleService = dependencies.roleService;
@@ -453,7 +453,7 @@ export class AuthService extends CoreBaseService {
       }
     );
 
-    if (delivery) await this.emailService.sendVerificationEmail(delivery);
+    if (delivery) await this.mailService.sendVerificationMail(delivery);
   }
 
   private findPendingVerificationUser(email: string, manager: EntityManager) {

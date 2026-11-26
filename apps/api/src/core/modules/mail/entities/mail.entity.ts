@@ -2,7 +2,7 @@ import { Column, Entity } from 'typeorm';
 import { BaseEntity } from '../../../base.entity.js';
 import type { SMTPSentMessageInfo } from 'nodemailer';
 
-export enum EmailStatus {
+export enum MailStatus {
   CANCELLED = 'cancelled',
   PENDING = 'pending',
   SENDING = 'sending',
@@ -12,8 +12,8 @@ export enum EmailStatus {
   FAILED = 'failed',
 }
 
-@Entity('core__email')
-export class EmailEntity extends BaseEntity {
+@Entity('core__mail')
+export class MailEntity extends BaseEntity {
   @Column({
     name: 'cancelled_at',
     type: 'datetime',
@@ -57,10 +57,10 @@ export class EmailEntity extends BaseEntity {
   @Column({
     name: 'status',
     type: 'enum',
-    enum: EmailStatus,
-    default: EmailStatus.PENDING,
+    enum: MailStatus,
+    default: MailStatus.PENDING,
   })
-  status: EmailStatus;
+  status: MailStatus;
 
   @Column({
     name: 'from',

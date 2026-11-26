@@ -1,7 +1,7 @@
 import type { DataSource } from 'typeorm';
 import createAccessControlModule from './modules/access-control/index.js';
 import createAuthModule from './modules/auth/index.js';
-import createEmailModule from './modules/email/index.js';
+import createEmailModule from './modules/mail/index.js';
 import createModuleModule from './modules/modules/index.js';
 import createRoleModule from './modules/role/index.js';
 import createSessionModule from './modules/session/index.js';
@@ -36,7 +36,7 @@ const createCoreContainer = (
   const authModule = createAuthModule(
     config,
     {
-      emailService: emailModule.service,
+      mailService: emailModule.service,
       roleService: roleModule.service,
       sessionService: sessionModule.service,
       userService: userModule.service,

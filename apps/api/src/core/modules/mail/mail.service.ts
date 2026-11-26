@@ -7,20 +7,20 @@ import {
   type SMTPSentMessageInfo,
   type SMTPTransportOptions,
 } from 'nodemailer';
-import { EmailStatus, type EmailEntity } from './entities/email.entity.js';
+import { MailStatus, type MailEntity } from './entities/mail.entity.js';
 
-export type SendVerificationEmailParams = {
+export type SendVerificationMailParams = {
   email: string;
   code: string;
   expiresInMinutes: number;
 };
 
-export default class EmailService extends BaseService<EmailEntity> {
-  readonly name = 'email';
+export default class MailService extends BaseService<MailEntity> {
+  readonly name = 'mail';
   private readonly transporter: Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
 
   constructor(
-    repository: Repository<EmailEntity>,
+    repository: Repository<MailEntity>,
     private readonly config: AppConfig
   ) {
     super(repository);
@@ -39,11 +39,11 @@ export default class EmailService extends BaseService<EmailEntity> {
     });
   }
 
-  public async sendVerificationEmail({
+  public async sendVerificationMail({
     email,
     code,
     expiresInMinutes,
-  }: SendVerificationEmailParams): Promise<boolean> {
+  }: SendVerificationMailParams): Promise<boolean> {
     const { host, port, fromEmail, username, password } = this.config.smtp;
     if (
       !host ||
@@ -51,11 +51,11 @@ export default class EmailService extends BaseService<EmailEntity> {
       !fromEmail ||
       Boolean(username) !== Boolean(password)
     ) {
-      console.warn('Verification email SMTP configuration is incomplete');
+      console.warn('Verification mail SMTP configuration is incomplete');
       return false;
     }
 
-    const subject = 'Email verification code';
+    const subject = 'Mail verification code';
     let sent = false;
 
     try {
@@ -70,7 +70,7 @@ export default class EmailService extends BaseService<EmailEntity> {
       // SMTP errors may contain parts of the original message.
     }
 
-    if (!sent) console.warn('Verification email SMTP delivery failed');
+    if (!sent) console.warn('Verification mail SMTP delivery failed');
 
     try {
       const now = new Date();
@@ -79,12 +79,12 @@ export default class EmailService extends BaseService<EmailEntity> {
         to: email,
         subject,
         text: '',
-        status: sent ? EmailStatus.SENT : EmailStatus.FAILED,
+        status: sent ? MailStatus.SENT : MailStatus.FAILED,
         sentAt: sent ? now : null,
         failedAt: sent ? null : now,
       });
     } catch {
-      console.error('Could not record verification email delivery metadata');
+      console.error('Could not record verification mail delivery metadata');
     }
 
     return sent;

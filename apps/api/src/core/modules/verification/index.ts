@@ -13,17 +13,20 @@ const createVerificationModule = (
   config: AppConfig,
   dataSource: DataSource
 ): VerificationModule => {
-  const secret = config.auth.otpSecret?.trim();
-  if (!secret || Buffer.byteLength(secret) < 32) {
+  const otpSecret = config.auth.verification.otpSecret;
+
+  if (!otpSecret || Buffer.byteLength(otpSecret) < 32)
     throw new InternalServerError('OTP_SECRET must contain at least 32 bytes');
-  }
 
   return {
     name: 'verification',
     entities: [VerificationEntity],
     service: new VerificationService(
       dataSource.getRepository(VerificationEntity),
-      secret
+      {
+        ...config.auth.verification,
+        otpSecret,
+      }
     ),
   };
 };

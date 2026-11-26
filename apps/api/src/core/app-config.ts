@@ -20,7 +20,14 @@ const defaultConfig: AppConfig = {
     refreshExpiresInSeconds: 604800,
     issuer: 'api',
     audience: 'api',
-    otpSecret: undefined,
+    verification: {
+      otpSecret: undefined,
+      codeTtlMinutes: 10,
+      maxFailedAttempts: 5,
+      sendCooldownMs: 60_000,
+      sendWindowMs: 3_600_000,
+      maxSendsPerWindow: 5,
+    },
   },
   database: {
     host: 'localhost',
