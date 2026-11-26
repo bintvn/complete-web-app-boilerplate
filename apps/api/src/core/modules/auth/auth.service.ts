@@ -5,10 +5,10 @@ import {
 } from '@node-rs/argon2';
 import jwt from 'jsonwebtoken';
 import type { JwtPayload, SignOptions } from 'jsonwebtoken';
-import { IsNull, Not } from 'typeorm';
+import { IsNull, Not, type EntityManager } from 'typeorm';
 import {
   AuthError,
-  BadRequestError,
+  InternalServerError,
   NotFoundError,
   TokenExpiredError,
 } from '../../errors.js';
@@ -32,8 +32,11 @@ import type { AuthModuleDependencies } from './index.js';
 import type { UserEntity } from '../user/entities/user.entity.js';
 import type { SessionEntity } from '../session/entities/session.entity.js';
 import type SessionService from '../session/session.service.js';
+import type VerificationService from '../verification/verification.service.js';
 import { CoreBaseService } from '../../core-base.service.js';
 import type { AppConfig } from '../../types/app.types.js';
+
+const EMAIL_VERIFICATION_PURPOSE = 'verify_email';
 
 export class AuthService extends CoreBaseService {
   public readonly name = 'auth';
@@ -41,6 +44,7 @@ export class AuthService extends CoreBaseService {
   private readonly sessionService: SessionService;
   private readonly userService: UserService;
   private readonly roleService: RoleService;
+  private readonly verificationService: VerificationService;
 
   constructor(
     protected readonly dependencies: AuthModuleDependencies,
@@ -52,13 +56,16 @@ export class AuthService extends CoreBaseService {
     this.sessionService = dependencies.sessionService;
     this.userService = dependencies.userService;
     this.roleService = dependencies.roleService;
+    this.verificationService = dependencies.verificationService;
     this.config = config;
   }
 
-  public async register(input: RegisterInput) {
+  public async register(
+    input: RegisterInput
+  ): Promise<{ verificationDelivery: 'sent' | 'retry_required' }> {
     const normalizedEmail = this.normalizeEmail(input.email);
 
-    return await this.userService.repository.manager.transaction(
+    const challenge = await this.userService.repository.manager.transaction(
       async (manager) => {
         const userRepository = manager.getRepository(
           this.userService.repository.target
@@ -89,18 +96,27 @@ export class AuthService extends CoreBaseService {
           manager
         );
 
-        await this.emailService.sendVerificationEmail(
-          {
-            userId: savedUser.id,
-            userEmail: savedUser.email,
-            userName: savedUser.name,
-          },
+        const issued = await this.verificationService.issue(
+          this.emailVerificationTarget(savedUser),
           manager
         );
 
-        return true;
+        if (!issued) {
+          throw new InternalServerError(
+            'Could not issue an email verification code'
+          );
+        }
+
+        return issued;
       }
     );
+
+    const sent = await this.emailService.sendVerificationEmail({
+      email: normalizedEmail,
+      ...challenge,
+    });
+
+    return { verificationDelivery: sent ? 'sent' : 'retry_required' };
   }
 
   public async signin(input: SignInInput): Promise<AuthResult> {
@@ -138,7 +154,7 @@ export class AuthService extends CoreBaseService {
     }
 
     if (!user.isEmailVerified)
-      throw new BadRequestError('Email is not verified', 400);
+      throw new AuthError('Email is not verified', 400, 'EMAIL_NOT_VERIFIED');
 
     const authUser: AuthenticatedUser = {
       id: user.id,
@@ -423,10 +439,70 @@ export class AuthService extends CoreBaseService {
       await this.signoutAll(input.userId, input.currentSessionId);
   }
 
-  public async verifyEmailToken(token: string) {
-    await this.emailService.verifyEmailVerificationToken(token);
+  public async verifyEmail(email: string, code: string): Promise<void> {
+    const verified = await this.userService.repository.manager.transaction(
+      async (manager) => {
+        const user = await this.findPendingVerificationUser(email, manager);
+        if (!user) return false;
 
-    return true;
+        const consumed = await this.verificationService.consume(
+          this.emailVerificationTarget(user),
+          code,
+          manager
+        );
+        if (!consumed) return false;
+
+        await manager
+          .getRepository(this.userService.repository.target)
+          .update(user.id, {
+            isEmailVerified: true,
+          });
+        return true;
+      }
+    );
+
+    if (!verified) {
+      throw new AuthError(
+        'Invalid or expired email verification code',
+        400,
+        'EMAIL_VERIFICATION_INVALID'
+      );
+    }
+  }
+
+  public async resendEmailVerification(email: string): Promise<void> {
+    const delivery = await this.userService.repository.manager.transaction(
+      async (manager) => {
+        const user = await this.findPendingVerificationUser(email, manager);
+        if (!user) return null;
+
+        const target = this.emailVerificationTarget(user);
+        const challenge = await this.verificationService.issue(target, manager);
+        return challenge ? { email: target.destination, ...challenge } : null;
+      }
+    );
+
+    if (delivery) await this.emailService.sendVerificationEmail(delivery);
+  }
+
+  private findPendingVerificationUser(email: string, manager: EntityManager) {
+    return manager.getRepository(this.userService.repository.target).findOne({
+      where: {
+        email: this.normalizeEmail(email),
+        isEmailVerified: false,
+        disabled: false,
+        deletedAt: IsNull(),
+      },
+      lock: { mode: 'pessimistic_write' },
+    });
+  }
+
+  private emailVerificationTarget(user: UserEntity) {
+    return {
+      userId: user.id,
+      purpose: EMAIL_VERIFICATION_PURPOSE,
+      destination: this.normalizeEmail(user.email),
+    };
   }
 
   private async createSessionAndTokens(

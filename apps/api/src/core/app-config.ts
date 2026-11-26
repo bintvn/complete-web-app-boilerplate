@@ -20,7 +20,7 @@ const defaultConfig: AppConfig = {
     refreshExpiresInSeconds: 604800,
     issuer: 'api',
     audience: 'api',
-    emailVerificationSecret: 'secret',
+    otpSecret: undefined,
   },
   database: {
     host: 'localhost',

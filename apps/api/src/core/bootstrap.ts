@@ -6,6 +6,7 @@ import createModuleModule from './modules/modules/index.js';
 import createRoleModule from './modules/role/index.js';
 import createSessionModule from './modules/session/index.js';
 import createUserModule from './modules/user/index.js';
+import createVerificationModule from './modules/verification/index.js';
 import type { AppConfig } from './types/app.types.js';
 import type { AuthMiddleware } from './middlewares/auth.middleware.js';
 
@@ -24,6 +25,7 @@ const createCoreContainer = (
   const moduleModule = createModuleModule(dataSource, authMiddleware);
   const roleModule = createRoleModule(dataSource, authMiddleware);
   const sessionModule = createSessionModule(dataSource);
+  const verificationModule = createVerificationModule(config, dataSource);
   const userModule = createUserModule(
     dataSource,
     {
@@ -38,6 +40,7 @@ const createCoreContainer = (
       roleService: roleModule.service,
       sessionService: sessionModule.service,
       userService: userModule.service,
+      verificationService: verificationModule.service,
     },
     authMiddleware
   );
@@ -50,6 +53,7 @@ const createCoreContainer = (
     roleModule,
     userModule,
     sessionModule,
+    verificationModule,
   };
 };
 

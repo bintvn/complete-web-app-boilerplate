@@ -11,7 +11,8 @@ export function createAuthRouter(
   router.post('/sign-up', authController.signUp);
   router.post('/sign-in', authController.signin);
   router.post('/refresh', authController.refresh);
-  router.get('/verify/email/:token', authController.verifyEmailToken);
+  router.post('/verify/email', authController.verifyEmail);
+  router.post('/verify/email/resend', authController.resendEmailVerification);
 
   router.get('/me', authMiddleware, authController.me);
   router.get('/session', authMiddleware, authController.session);

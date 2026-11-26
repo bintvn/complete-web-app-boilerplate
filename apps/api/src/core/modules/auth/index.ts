@@ -5,6 +5,7 @@ import type EmailService from '../email/email.service.js';
 import type UserService from '../user/user.service.js';
 import type RoleService from '../role/role.service.js';
 import type SessionService from '../session/session.service.js';
+import type VerificationService from '../verification/verification.service.js';
 import type { Module } from '../../types/module.types.js';
 import type { Router } from 'express';
 import { type AuthMiddleware } from '../../middlewares/auth.middleware.js';
@@ -15,6 +16,7 @@ export interface AuthModuleDependencies {
   userService: UserService;
   roleService: RoleService;
   sessionService: SessionService;
+  verificationService: VerificationService;
 }
 
 export interface AuthModule extends Module {

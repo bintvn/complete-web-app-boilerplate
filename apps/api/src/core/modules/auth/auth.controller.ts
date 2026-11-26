@@ -11,7 +11,9 @@ import {
   changePasswordSchema,
   refreshSchema,
   registerSchema,
+  resendEmailVerificationSchema,
   signInSchema,
+  verifyEmailSchema,
 } from './auth.schema.js';
 import { IS_DEV } from '../../constants.js';
 import { userDto } from '../user/user.dto.js';
@@ -29,10 +31,11 @@ export class AuthController {
 
   public signUp = async (req: Request, res: Response): Promise<void> => {
     const parsed = registerSchema.parse(req.body);
-    await this.authService.register(parsed);
+    const data = await this.authService.register(parsed);
 
     res.status(201).json({
       success: true,
+      data,
     });
   };
 
@@ -192,16 +195,23 @@ export class AuthController {
     });
   };
 
-  public verifyEmailToken = async (
-    request: Request<{ token: string }>,
-    response: Response
+  public verifyEmail = async (req: Request, res: Response): Promise<void> => {
+    const { email, code } = verifyEmailSchema.parse(req.body);
+    await this.authService.verifyEmail(email, code);
+
+    res.status(200).json({
+      success: true,
+    });
+  };
+
+  public resendEmailVerification = async (
+    req: Request,
+    res: Response
   ): Promise<void> => {
-    const token = request.params.token;
-    const result = await this.authService.verifyEmailToken(token);
+    const { email } = resendEmailVerificationSchema.parse(req.body);
+    await this.authService.resendEmailVerification(email);
 
-    if (!result) throw new AuthError('Token tidak valid', 400, 'TOKEN_INVALID');
-
-    response.status(200).json({
+    res.status(202).json({
       success: true,
     });
   };

@@ -202,6 +202,8 @@ export function isAppError(error: unknown): error is AppError {
 export type AuthErrorCode =
   | 'INVALID_CREDENTIALS'
   | 'EMAIL_ALREADY_EXISTS'
+  | 'EMAIL_NOT_VERIFIED'
+  | 'EMAIL_VERIFICATION_INVALID'
   | 'TOKEN_MISSING'
   | 'TOKEN_INVALID'
   | 'TOKEN_EXPIRED'

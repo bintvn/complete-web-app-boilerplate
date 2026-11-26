@@ -1,14 +1,5 @@
-import type { EntityManager, Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 import { BaseService } from '../../base.service.js';
-import { UserEntity } from '../user/entities/user.entity.js';
-import { EmailStatus, type EmailEntity } from './entities/email.entity.js';
-import { BASE_URL } from '../../constants.js';
-import jwt, { type JwtPayload } from 'jsonwebtoken';
-import {
-  BadRequestError,
-  InternalServerError,
-  NotFoundError,
-} from '../../errors.js';
 import type { AppConfig } from '../../types/app.types.js';
 import {
   createTransport,
@@ -16,189 +7,86 @@ import {
   type SMTPSentMessageInfo,
   type SMTPTransportOptions,
 } from 'nodemailer';
+import { EmailStatus, type EmailEntity } from './entities/email.entity.js';
 
 export type SendVerificationEmailParams = {
-  userId: UserEntity['id'];
-  userName: UserEntity['name'];
-  userEmail: UserEntity['email'];
+  email: string;
+  code: string;
+  expiresInMinutes: number;
 };
 
-export interface EmailVerificationPayload extends JwtPayload {
-  userId: string;
-  email: string;
-  purpose: 'email_verification';
-}
-
-export default class EmailService extends BaseService<
-  EmailEntity,
-  Repository<EmailEntity>
-> {
-  name = 'email';
+export default class EmailService extends BaseService<EmailEntity> {
+  readonly name = 'email';
   private readonly transporter: Mail<SMTPSentMessageInfo, SMTPTransportOptions>;
 
   constructor(
-    protected readonly repository: Repository<EmailEntity>,
-    protected readonly config: AppConfig
+    repository: Repository<EmailEntity>,
+    private readonly config: AppConfig
   ) {
     super(repository);
 
+    const { host, port, secure, username, password } = this.config.smtp;
     this.transporter = createTransport({
-      host: this.config.smtp.host,
-      port: this.config.smtp.port,
-      secure: this.config.smtp.secure,
-      tls: !this.config.smtp.secure
-        ? {
-            rejectUnauthorized: false,
-          }
-        : undefined,
-      auth: {
-        user: this.config.smtp.fromEmail,
-        pass: this.config.smtp.password,
-      },
+      host,
+      port,
+      secure,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
+      ...(username && password
+        ? { auth: { user: username, pass: password } }
+        : {}),
     });
   }
 
-  public async sendVerificationEmail(
-    data: SendVerificationEmailParams,
-    manager?: EntityManager
-  ) {
-    if (!this.config.smtp.host || !this.config.smtp.port) return;
-
-    const repository = manager
-      ? manager.getRepository(this.repository.target)
-      : this.repository;
-
-    let email = repository.create({
-      subject: 'Email Verification',
-      from: this.config.smtp.fromEmail,
-      to: `${data.userName} <${data.userEmail}>`,
-      text: '',
-    });
-
-    email = await repository.save(email);
-    email.text = `Hello ${data.userName},\n\nTo verify your account, please click on the following link: ${BASE_URL}/auth/verify/email/${this.generateEmailVerificationToken(data.userId, email.id, data.userEmail)}`;
-    email = await repository.save(email);
-
-    const result = await this.sendMail(
-      email.to,
-      email.subject,
-      email.text,
-      email.html ? email.html : undefined
-    );
-
-    email.resultJson = result ? result : null;
-
-    if (result) {
-      email.sentAt =
-        result.accepted.length > 0 && result.response.includes('250')
-          ? new Date()
-          : null;
-      email.status = EmailStatus.SENT;
-    } else {
-      email.failedAt = new Date();
-      email.status = EmailStatus.FAILED;
+  public async sendVerificationEmail({
+    email,
+    code,
+    expiresInMinutes,
+  }: SendVerificationEmailParams): Promise<boolean> {
+    const { host, port, fromEmail, username, password } = this.config.smtp;
+    if (
+      !host ||
+      !port ||
+      !fromEmail ||
+      Boolean(username) !== Boolean(password)
+    ) {
+      console.warn('Verification email SMTP configuration is incomplete');
+      return false;
     }
 
-    return await repository.save(email);
-  }
+    const subject = 'Email verification code';
+    let sent = false;
 
-  public async verifyEmailVerificationToken(token: string) {
     try {
-      if (!this.config.auth.emailVerificationSecret)
-        throw new InternalServerError(
-          'JWT_EMAIL_VERIFICATION_SECRET is not defined'
-        );
-
-      const decoded: string | JwtPayload = jwt.verify(
-        token,
-        this.config.auth.emailVerificationSecret
-      );
-
-      if (
-        typeof decoded === 'string' ||
-        decoded.purpose !== 'email_verification' ||
-        typeof decoded.userId !== 'string' ||
-        typeof decoded.emailId !== 'string' ||
-        typeof decoded.email !== 'string'
-      )
-        throw new BadRequestError('Invalid email verification token');
-
-      const email = await this.repository.findOne({
-        where: {
-          id: decoded.emailId,
-        },
+      const result = await this.transporter.sendMail({
+        from: fromEmail,
+        to: email,
+        subject,
+        text: `Your verification code is ${code}. It expires in ${String(expiresInMinutes)} minutes.`,
       });
-
-      if (!email) throw new NotFoundError('Email not found');
-
-      email.status = EmailStatus.READ;
-      email.readAt = new Date();
-
-      await this.repository.save(email);
-
-      await this.repository.manager
-        .getRepository(UserEntity)
-        .update(decoded.userId, {
-          isEmailVerified: true,
-        });
-
-      return {
-        userId: decoded.userId,
-        email: decoded.email,
-        purpose:
-          decoded.purpose as unknown as EmailVerificationPayload['purpose'],
-      };
-    } catch (error: unknown) {
-      if (error instanceof BadRequestError || error instanceof NotFoundError) {
-        throw error;
-      }
-
-      console.error(error);
-
-      throw new InternalServerError('Failed to verify email token');
+      sent = result.accepted.length > 0;
+    } catch {
+      // SMTP errors may contain parts of the original message.
     }
-  }
 
-  private generateEmailVerificationToken(
-    userId: string,
-    emailId: string,
-    email: string,
-    expiresIn: jwt.SignOptions['expiresIn'] = '1h'
-  ): string {
-    const payload: EmailVerificationPayload = {
-      userId,
-      emailId,
-      email,
-      purpose: 'email_verification',
-    };
+    if (!sent) console.warn('Verification email SMTP delivery failed');
 
-    if (!this.config.auth.emailVerificationSecret)
-      throw new InternalServerError(
-        'JWT_EMAIL_VERIFICATION_SECRET is not defined'
-      );
+    try {
+      const now = new Date();
+      await this.create({
+        from: fromEmail,
+        to: email,
+        subject,
+        text: '',
+        status: sent ? EmailStatus.SENT : EmailStatus.FAILED,
+        sentAt: sent ? now : null,
+        failedAt: sent ? null : now,
+      });
+    } catch {
+      console.error('Could not record verification email delivery metadata');
+    }
 
-    return jwt.sign(payload, this.config.auth.emailVerificationSecret, {
-      expiresIn,
-    });
-  }
-
-  private async sendMail(
-    toEmail: string,
-    subject: string,
-    text: string,
-    html?: string
-  ) {
-    if (!this.transporter.options.host || !this.transporter.options.port)
-      return;
-
-    const result = await this.transporter.sendMail({
-      subject,
-      from: this.config.smtp.fromEmail,
-      to: toEmail,
-      text,
-      html,
-    });
-
-    return result;
+    return sent;
   }
 }

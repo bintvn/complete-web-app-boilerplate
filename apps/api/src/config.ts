@@ -23,6 +23,7 @@ export default appConfig((config) => {
         : undefined,
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
+      otpSecret: process.env.OTP_SECRET,
     },
     database: {
       host: process.env.DB_HOST,
@@ -38,8 +39,8 @@ export default appConfig((config) => {
         : undefined,
       secure: process.env.SMTP_SECURE === 'true',
       fromEmail: process.env.SMTP_FROM_EMAIL,
-      loginEmail: process.env.SMTP_LOGIN_EMAIL,
-      loginPassword: process.env.SMTP_LOGIN_PASSWORD,
+      username: process.env.SMTP_LOGIN_EMAIL,
+      password: process.env.SMTP_LOGIN_PASSWORD,
     },
   };
 });

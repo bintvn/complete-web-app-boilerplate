@@ -62,11 +62,9 @@ export interface AppConfig {
      */
     audience: string;
     /**
-     * JWT secret for email verification
-     * @type {string}
-     * @default secret
+     * HMAC secret for verification codes.
      */
-    emailVerificationSecret: string;
+    otpSecret: string | undefined;
   };
   database: {
     /**
