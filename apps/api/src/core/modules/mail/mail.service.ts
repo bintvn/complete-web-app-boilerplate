@@ -8,6 +8,10 @@ import {
   type SMTPTransportOptions,
 } from 'nodemailer';
 import { MailStatus, type MailEntity } from './entities/mail.entity.js';
+import {
+  renderEmail,
+  VerificationCodeEmail,
+} from '@complete-web-app-boilerplate/email-template';
 
 export type SendVerificationMailParams = {
   email: string;
@@ -58,6 +62,10 @@ export default class MailService extends BaseService<MailEntity> {
     let sent = false;
 
     const text = `Your verification code is ${code}. It expires in ${String(expiresInMinutes)} minutes.`;
+    const html = await renderEmail(VerificationCodeEmail, {
+      validationCode: code,
+      expiryMinutes: expiresInMinutes,
+    });
 
     try {
       const result = await this.transporter.sendMail({
@@ -65,6 +73,7 @@ export default class MailService extends BaseService<MailEntity> {
         to: email,
         subject,
         text,
+        html,
       });
       sent = result.accepted.length > 0;
     } catch {
@@ -80,6 +89,7 @@ export default class MailService extends BaseService<MailEntity> {
         to: email,
         subject,
         text,
+        html,
         status: sent ? MailStatus.SENT : MailStatus.FAILED,
         sentAt: sent ? now : null,
         failedAt: sent ? null : now,
