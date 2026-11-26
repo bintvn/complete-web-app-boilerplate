@@ -31,11 +31,10 @@ export class AuthController {
 
   public signUp = async (req: Request, res: Response): Promise<void> => {
     const parsed = registerSchema.parse(req.body);
-    const data = await this.authService.register(parsed);
+    await this.authService.register(parsed);
 
     res.status(201).json({
       success: true,
-      data,
     });
   };
 

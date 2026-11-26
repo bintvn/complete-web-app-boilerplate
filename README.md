@@ -24,12 +24,14 @@ Set `OTP_SECRET` to a dedicated random secret of at least 32 bytes in the API en
 
 These endpoints accept `application/json` and can be called before sign-in without cookies or an access token.
 
-| Request                          | JSON body                                                                            | Successful response                                                                                                                                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /auth/sign-up`             | `{ "name": "Example", "email": "user@example.com", "password": "example-password" }` | `201` with `{ "success": true, "data": { "verificationDelivery": "sent" } }`. `verificationDelivery` is `retry_required` if SMTP did not confirm acceptance. The account can request another code. |
-| `POST /auth/verify/email`        | `{ "email": "user@example.com", "code": "042613" }`                                  | `200` with `{ "success": true }`. The code must be a six-digit string.                                                                                                                             |
-| `POST /auth/verify/email/resend` | `{ "email": "user@example.com" }`                                                    | `202` with `{ "success": true }`. This response acknowledges the request and is the same for accounts that are ineligible, rate-limited, or encounter delivery failure.                            |
+| Request                          | JSON body                                                                            | Successful response              |
+| -------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| `POST /auth/sign-up`             | `{ "name": "Example", "email": "user@example.com", "password": "example-password" }` | `201` with `{ "success": true }` |
+| `POST /auth/verify/email/resend` | `{ "email": "user@example.com" }`                                                    | `202` with `{ "success": true }` |
+| `POST /auth/verify/email`        | `{ "email": "user@example.com", "code": "042613" }`                                  | `200` with `{ "success": true }` |
 
-Codes expire after 10 minutes and allow at most five attempts. Sending is limited to once per minute and five times in a rolling hour per account for email verification, including the initial send. Issuing a new code invalidates the previous one.
+After registration, call `/auth/verify/email/resend` to request the first code. Registration creates the account without sending an email. Use the same endpoint to request another code. Its `202` response acknowledges the request and is the same for ineligible accounts, rate-limited requests, and delivery failures.
+
+Submit the code as a six-digit string. Codes expire after 10 minutes and allow at most five attempts. Sending is limited to once per minute and five times in a rolling hour per account, starting with the first code request. Issuing a new code invalidates the previous one.
 
 The API returns `400 EMAIL_VERIFICATION_INVALID` for a well-formed code that cannot be used and `400 VALIDATION_ERROR` for invalid request fields. After verification, call `POST /auth/sign-in` to create a session. A correct password for a pending account returns `400 EMAIL_NOT_VERIFIED`.

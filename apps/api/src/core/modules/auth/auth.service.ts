@@ -6,12 +6,7 @@ import {
 import jwt from 'jsonwebtoken';
 import type { JwtPayload, SignOptions } from 'jsonwebtoken';
 import { IsNull, Not, type EntityManager } from 'typeorm';
-import {
-  AuthError,
-  InternalServerError,
-  NotFoundError,
-  TokenExpiredError,
-} from '../../errors.js';
+import { AuthError, NotFoundError, TokenExpiredError } from '../../errors.js';
 import type {
   AccessTokenPayload,
   AuthenticatedUser,
@@ -60,63 +55,39 @@ export class AuthService extends CoreBaseService {
     this.config = config;
   }
 
-  public async register(
-    input: RegisterInput
-  ): Promise<{ verificationDelivery: 'sent' | 'retry_required' }> {
+  public async register(input: RegisterInput): Promise<void> {
     const normalizedEmail = this.normalizeEmail(input.email);
 
-    const challenge = await this.userService.repository.manager.transaction(
-      async (manager) => {
-        const userRepository = manager.getRepository(
-          this.userService.repository.target
-        );
-        const existingUser = await userRepository.findOne({
-          select: {
-            id: true,
-          },
-          where: {
-            email: normalizedEmail,
-          },
-        });
+    await this.userService.repository.manager.transaction(async (manager) => {
+      const userRepository = manager.getRepository(
+        this.userService.repository.target
+      );
+      const existingUser = await userRepository.findOne({
+        select: {
+          id: true,
+        },
+        where: {
+          email: normalizedEmail,
+        },
+      });
 
-        if (existingUser)
-          throw new AuthError('Email Exists', 409, 'EMAIL_ALREADY_EXISTS');
+      if (existingUser)
+        throw new AuthError('Email Exists', 409, 'EMAIL_ALREADY_EXISTS');
 
-        const role = await this.roleService.getBy({ slug: 'user' }, manager);
+      const role = await this.roleService.getBy({ slug: 'user' }, manager);
 
-        if (!role) throw new NotFoundError('User Role not found');
+      if (!role) throw new NotFoundError('User Role not found');
 
-        const savedUser = await this.userService.create(
-          {
-            name: input.name.trim(),
-            email: normalizedEmail,
-            password: input.password,
-            roleId: role.id,
-          },
-          manager
-        );
-
-        const issued = await this.verificationService.issue(
-          this.emailVerificationTarget(savedUser),
-          manager
-        );
-
-        if (!issued) {
-          throw new InternalServerError(
-            'Could not issue an email verification code'
-          );
-        }
-
-        return issued;
-      }
-    );
-
-    const sent = await this.emailService.sendVerificationEmail({
-      email: normalizedEmail,
-      ...challenge,
+      await this.userService.create(
+        {
+          name: input.name.trim(),
+          email: normalizedEmail,
+          password: input.password,
+          roleId: role.id,
+        },
+        manager
+      );
     });
-
-    return { verificationDelivery: sent ? 'sent' : 'retry_required' };
   }
 
   public async signin(input: SignInInput): Promise<AuthResult> {
