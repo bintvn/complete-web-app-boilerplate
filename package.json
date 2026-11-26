@@ -1,0 +1,33 @@
+{
+  "name": "complete-web-app-boilerplate",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo run dev --env-mode=loose",
+    "dev:web": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/web",
+    "dev:admin": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/admin",
+    "dev:api": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/api",
+    "start:api": "pnpm --filter @complete-web-app-boilerplate/api start",
+    "api:generate:module": "pnpm --filter @complete-web-app-boilerplate/api generate:module",
+    "build": "turbo run build",
+    "build:api": "turbo run build --filter=@complete-web-app-boilerplate/api",
+    "build:shared": "turbo run build --filter=@complete-web-app-boilerplate/shared",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "typecheck": "turbo run typecheck"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "packageManager": "pnpm@12.23.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "prettier": "^3.10.1",
+    "turbo": "2.11.13",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0"
+  }
+}

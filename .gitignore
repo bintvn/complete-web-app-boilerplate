@@ -1,0 +1,38 @@
+# Dependencies and package-manager caches
+node_modules/
+.pnpm-store/
+
+# Build output and tool caches
+.turbo/
+.next/
+dist/
+dist-ssr/
+coverage/
+.eslintcache
+*.tsbuildinfo
+
+# Local environment files and private keys
+.env*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Deployment metadata
+.vercel/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local editor and OS files
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

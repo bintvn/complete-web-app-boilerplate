@@ -1,0 +1,30 @@
+{
+  "name": "@complete-web-app-boilerplate/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ./node_modules/next/dist/bin/next dev -p 3002",
+    "build": "node ./node_modules/next/dist/bin/next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier . --write --ignore-path ../../.prettierignore",
+    "typecheck": "next typegen && tsc --noEmit --incremental false"
+  },
+  "dependencies": {
+    "@complete-web-app-boilerplate/ui": "workspace:*",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@12.23.0"
+}

@@ -1,0 +1,60 @@
+{
+  "name": "@complete-web-app-boilerplate/api",
+  "description": "A backend microservice boilerplate for Node.js using TypeScript, Express, MySQL, and TypeORM.",
+  "version": "0.0.0",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "cross-env-shell NODE_ENV=development tsx watch src/server.ts",
+    "generate:module": "tsx src/core/generator/generate-module.ts",
+    "build": "node scripts/clean-dist.mjs && npm run typecheck && npm run lint && tsc",
+    "start": "cross-env-shell NODE_ENV=production node dist/server.js",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "nodejs",
+    "backend",
+    "microservice",
+    "boilerplate",
+    "typescript",
+    "express",
+    "typeorm"
+  ],
+  "author": "Bintan <hello@bintvn.com> (https://bintvn.com)",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.2",
+    "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.24.6",
+    "nodemailer": "^10.6.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^1.1.3",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^24.19.2",
+    "cross-env": "^10.1.0",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0"
+  }
+}
