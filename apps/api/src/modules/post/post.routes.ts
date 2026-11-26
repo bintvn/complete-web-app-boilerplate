@@ -9,7 +9,7 @@ const createPostRouter = (
   const postRoutes = Router();
 
   postRoutes.get('/', postController.getAll);
-  postRoutes.get('/:id', authMiddleware, postController.get);
+  postRoutes.get('/:id', postController.get);
   postRoutes.post('/', authMiddleware, postController.create);
   postRoutes.patch('/:id', authMiddleware, postController.update);
   postRoutes.delete('/:id', authMiddleware, postController.delete);

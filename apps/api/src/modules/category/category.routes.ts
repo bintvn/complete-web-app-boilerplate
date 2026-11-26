@@ -8,8 +8,8 @@ const createCategoryRouter = (
 ) => {
   const postRoutes = Router();
 
-  postRoutes.get('/', authMiddleware, categoryController.getAll);
-  postRoutes.get('/:id', authMiddleware, categoryController.get);
+  postRoutes.get('/', categoryController.getAll);
+  postRoutes.get('/:id', categoryController.get);
   postRoutes.post('/', authMiddleware, categoryController.create);
   postRoutes.patch('/:id', authMiddleware, categoryController.update);
   postRoutes.delete('/:id', authMiddleware, categoryController.delete);
