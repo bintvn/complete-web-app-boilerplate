@@ -9,6 +9,7 @@ import {
   isAppError,
 } from '../errors.js';
 import { ZodError } from 'zod';
+import type { BearerAuthLocals } from './auth.middleware.js';
 
 function normalizeError(error: unknown) {
   if (
@@ -53,7 +54,7 @@ export default function createErrorHandler() {
   return (
     caughtError: unknown,
     _req: Request,
-    res: Response,
+    res: Response<unknown, BearerAuthLocals>,
     next: NextFunction
   ) => {
     if (res.headersSent) {
@@ -63,12 +64,29 @@ export default function createErrorHandler() {
 
     const error = normalizeError(caughtError);
 
-    if (isAppError(error)) {
+    if (isAppError(error) || error instanceof AuthError) {
+      const { bearerCredentials } = res.locals;
+
+      if (error.statusCode === 401 && bearerCredentials) {
+        res.set(
+          'WWW-Authenticate',
+          bearerCredentials === 'provided' && error.code !== 'TOKEN_MISSING'
+            ? 'Bearer error="invalid_token"'
+            : 'Bearer'
+        );
+      } else if (
+        error.statusCode === 400 &&
+        bearerCredentials === 'malformed'
+      ) {
+        res.set('WWW-Authenticate', 'Bearer error="invalid_request"');
+      }
+
       res.status(error.statusCode).json({
         success: false,
         code: error.code,
         message: error.message,
-        ...(error.details !== undefined && { details: error.details }),
+        ...(isAppError(error) &&
+          error.details !== undefined && { details: error.details }),
       });
 
       return;
@@ -79,16 +97,6 @@ export default function createErrorHandler() {
         success: false,
         code: 'VALIDATION_ERROR',
         errors: error.issues,
-      });
-
-      return;
-    }
-
-    if (error instanceof AuthError) {
-      res.status(error.statusCode).json({
-        success: false,
-        code: error.code,
-        message: error.message,
       });
 
       return;

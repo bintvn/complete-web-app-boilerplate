@@ -8,6 +8,10 @@ export interface AuthenticatedRequest extends Request {
   auth?: AccessTokenPayload;
 }
 
+export interface BearerAuthLocals {
+  bearerCredentials?: 'missing' | 'malformed' | 'provided';
+}
+
 export type AuthMiddleware = ReturnType<typeof createAuthMiddleware>;
 
 export function requireAuth(req: AuthenticatedRequest): AccessTokenPayload {
@@ -19,12 +23,15 @@ export function requireAuth(req: AuthenticatedRequest): AccessTokenPayload {
 export default function createAuthMiddleware(appConfig: AppConfig) {
   return (
     req: AuthenticatedRequest,
-    _res: Response,
+    res: Response<unknown, BearerAuthLocals>,
     next: NextFunction
   ): void => {
-    const authHeader = req.headers.authorization;
+    const [authorization, duplicateAuthorization] =
+      req.headersDistinct.authorization ?? [];
+    const [scheme, token, extra] = authorization?.trim().split(/\s+/, 3) ?? [];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (scheme?.toLowerCase() !== 'bearer') {
+      res.locals.bearerCredentials = 'missing';
       next(
         new AuthError(
           'Authorization Bearer header is required',
@@ -35,13 +42,27 @@ export default function createAuthMiddleware(appConfig: AppConfig) {
       return;
     }
 
-    const token = authHeader.slice(7).trim();
-
-    if (!token) {
-      next(new AuthError('Access token is empty', 401, 'TOKEN_MISSING'));
+    if (
+      !token ||
+      extra ||
+      token.includes(',') ||
+      duplicateAuthorization !== undefined
+    ) {
+      res.locals.bearerCredentials = 'malformed';
+      next(
+        new AuthError(
+          token
+            ? 'Authorization Bearer header is malformed'
+            : 'Access token is empty',
+          400,
+          token ? 'TOKEN_INVALID' : 'TOKEN_MISSING'
+        )
+      );
 
       return;
     }
+
+    res.locals.bearerCredentials = 'provided';
 
     try {
       req.auth = verifyAccessToken(token, appConfig);

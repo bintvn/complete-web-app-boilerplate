@@ -414,7 +414,7 @@ export class AuthService extends CoreBaseService {
     );
 
     if (!isOldPasswordValid)
-      throw new AuthError('Invalid old password', 401, 'INVALID_CREDENTIALS');
+      throw new AuthError('Invalid old password', 403, 'INVALID_CREDENTIALS');
 
     user.passwordHash = await hashPassword(input.newPassword);
     await this.userService.repository.save(user);
