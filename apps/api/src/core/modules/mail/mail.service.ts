@@ -33,9 +33,8 @@ export default class MailService extends BaseService<MailEntity> {
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 15_000,
-      ...(username && password
-        ? { auth: { user: username, pass: password } }
-        : {}),
+      ...(!secure && { tls: { rejectUnauthorized: false } }),
+      ...(username && password && { auth: { user: username, pass: password } }),
     });
   }
 
@@ -58,12 +57,14 @@ export default class MailService extends BaseService<MailEntity> {
     const subject = 'Mail verification code';
     let sent = false;
 
+    const text = `Your verification code is ${code}. It expires in ${String(expiresInMinutes)} minutes.`;
+
     try {
       const result = await this.transporter.sendMail({
         from: fromEmail,
         to: email,
         subject,
-        text: `Your verification code is ${code}. It expires in ${String(expiresInMinutes)} minutes.`,
+        text,
       });
       sent = result.accepted.length > 0;
     } catch {
@@ -78,7 +79,7 @@ export default class MailService extends BaseService<MailEntity> {
         from: fromEmail,
         to: email,
         subject,
-        text: '',
+        text,
         status: sent ? MailStatus.SENT : MailStatus.FAILED,
         sentAt: sent ? now : null,
         failedAt: sent ? null : now,
