@@ -58,35 +58,42 @@ export class AuthService extends CoreBaseService {
   public async register(input: RegisterInput): Promise<void> {
     const normalizedEmail = this.normalizeEmail(input.email);
 
-    await this.userService.repository.manager.transaction(async (manager) => {
-      const userRepository = manager.getRepository(
-        this.userService.repository.target
-      );
-      const existingUser = await userRepository.findOne({
-        select: {
-          id: true,
-        },
-        where: {
-          email: normalizedEmail,
-        },
-      });
+    const user = await this.userService.repository.manager.transaction(
+      async (manager) => {
+        const userRepository = manager.getRepository(
+          this.userService.repository.target
+        );
+        const existingUser = await userRepository.findOne({
+          select: {
+            id: true,
+          },
+          where: {
+            email: normalizedEmail,
+          },
+        });
 
-      if (existingUser)
-        throw new AuthError('Email Exists', 409, 'EMAIL_ALREADY_EXISTS');
+        if (existingUser)
+          throw new AuthError('Email Exists', 409, 'EMAIL_ALREADY_EXISTS');
 
-      const role = await this.roleService.getBy({ slug: 'user' }, manager);
+        const role = await this.roleService.getBy({ slug: 'user' }, manager);
 
-      if (!role) throw new NotFoundError('User Role not found');
+        if (!role) throw new NotFoundError('User Role not found');
 
-      await this.userService.create(
-        {
-          name: input.name.trim(),
-          email: normalizedEmail,
-          password: input.password,
-          roleId: role.id,
-        },
-        manager
-      );
+        return await this.userService.create(
+          {
+            name: input.name.trim(),
+            email: normalizedEmail,
+            password: input.password,
+            roleId: role.id,
+          },
+          manager
+        );
+      }
+    );
+
+    await this.mailService.sendWelcomeMail({
+      email: user.email,
+      userName: user.name,
     });
   }
 

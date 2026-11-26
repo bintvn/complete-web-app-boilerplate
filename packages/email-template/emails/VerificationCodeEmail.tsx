@@ -19,7 +19,7 @@ interface VerificationCodeEmailProps {
 
 export const VerificationCodeEmail = ({
   validationCode = "482910",
-  appName = "Acme",
+  appName = "App",
   expiryMinutes = 10,
 }: VerificationCodeEmailProps) => (
   <Html>

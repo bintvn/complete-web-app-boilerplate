@@ -11,12 +11,18 @@ import { MailStatus, type MailEntity } from './entities/mail.entity.js';
 import {
   renderEmail,
   VerificationCodeEmail,
+  WelcomeEmail,
 } from '@complete-web-app-boilerplate/email-template';
 
 export type SendVerificationMailParams = {
   email: string;
   code: string;
   expiresInMinutes: number;
+};
+
+export type SendWelcomeMailParams = {
+  email: string;
+  userName: string;
 };
 
 export default class MailService extends BaseService<MailEntity> {
@@ -42,21 +48,61 @@ export default class MailService extends BaseService<MailEntity> {
     });
   }
 
+  public async sendWelcomeMail({ email, userName }: SendWelcomeMailParams) {
+    const { fromEmail } = this.config.smtp;
+
+    if (!this.isSMTPConfigured()) return false;
+
+    const subject = 'Welcome to the app';
+    const text = `Welcome ${userName}!`;
+    const html = await renderEmail(WelcomeEmail, {
+      appName: 'App',
+      userName,
+    });
+    let sent = false;
+
+    try {
+      const result = await this.transporter.sendMail({
+        from: fromEmail,
+        to: email,
+        subject,
+        text,
+        html,
+      });
+      sent = result.accepted.length > 0;
+    } catch {
+      // SMTP errors may contain parts of the original message.
+    }
+
+    if (!sent) console.warn('Verification mail SMTP delivery failed');
+
+    try {
+      const now = new Date();
+      await this.create({
+        from: fromEmail,
+        to: email,
+        subject,
+        text,
+        html,
+        status: sent ? MailStatus.SENT : MailStatus.FAILED,
+        sentAt: sent ? now : null,
+        failedAt: sent ? null : now,
+      });
+    } catch {
+      console.error('Could not record verification mail delivery metadata');
+    }
+
+    return sent;
+  }
+
   public async sendVerificationMail({
     email,
     code,
     expiresInMinutes,
   }: SendVerificationMailParams): Promise<boolean> {
-    const { host, port, fromEmail, username, password } = this.config.smtp;
-    if (
-      !host ||
-      !port ||
-      !fromEmail ||
-      Boolean(username) !== Boolean(password)
-    ) {
-      console.warn('Verification mail SMTP configuration is incomplete');
-      return false;
-    }
+    const { fromEmail } = this.config.smtp;
+
+    if (!this.isSMTPConfigured()) return false;
 
     const subject = 'Mail verification code';
     let sent = false;
@@ -99,5 +145,21 @@ export default class MailService extends BaseService<MailEntity> {
     }
 
     return sent;
+  }
+
+  private isSMTPConfigured() {
+    const { host, port, fromEmail, username, password } = this.config.smtp;
+    if (
+      !host ||
+      !port ||
+      !fromEmail ||
+      Boolean(username) !== Boolean(password)
+    ) {
+      console.warn('Verification mail SMTP configuration is incomplete');
+
+      return false;
+    }
+
+    return true;
   }
 }
