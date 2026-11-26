@@ -23,7 +23,9 @@ export default appConfig((config) => {
         : undefined,
       issuer: process.env.JWT_ISSUER,
       audience: process.env.JWT_AUDIENCE,
-      otpSecret: process.env.OTP_SECRET,
+      verification: {
+        otpSecret: process.env.OTP_SECRET,
+      },
     },
     database: {
       host: process.env.DB_HOST,
