@@ -53,8 +53,7 @@ export type ApiErrorResponse = {
 };
 
 export type SessionBootstrapResponse =
-  | ApiSuccess<SessionDTO & { token: TokenResponse }>
-  | ApiErrorResponse;
+  ApiSuccess<SessionDTO & { token: TokenResponse }> | ApiErrorResponse;
 
 export type SortDirection = "ASC" | "DESC";
 

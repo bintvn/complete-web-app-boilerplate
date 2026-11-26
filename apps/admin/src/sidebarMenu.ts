@@ -1,4 +1,9 @@
-import { LayoutDashboardIcon, UsersIcon, StickyNoteIcon, CircleChevronDownIcon } from "lucide-react";
+import {
+  LayoutDashboardIcon,
+  UsersIcon,
+  StickyNoteIcon,
+  CircleChevronDownIcon,
+} from "lucide-react";
 import type { NavGroup } from "./components/app-sidebar";
 import type { UserMenuItem } from "./components/nav-user";
 

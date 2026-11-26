@@ -8,7 +8,10 @@ import type { ApiSuccess } from "@/types/api";
 import { useIsMobile } from "@complete-web-app-boilerplate/ui/hooks/use-mobile";
 import { useTheme } from "@/hooks/use-theme";
 import { useIsDarkMode } from "@/hooks/use-is-dark-mode";
-import { SidebarInset, SidebarProvider } from "@complete-web-app-boilerplate/ui/components/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@complete-web-app-boilerplate/ui/components/sidebar";
 import { Logo } from "@/components/logo";
 import { type NavGroup, AppSidebar } from "@/components/app-sidebar";
 import { MainContent } from "@/components/main-content";
@@ -74,17 +77,31 @@ export function BaseLayout({
                 <Logo size={20} />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{sidebarBrand.title}</span>
-                {sidebarBrand.subtitle && <span className="truncate text-xs">{sidebarBrand.subtitle}</span>}
+                <span className="truncate font-medium">
+                  {sidebarBrand.title}
+                </span>
+                {sidebarBrand.subtitle && (
+                  <span className="truncate text-xs">
+                    {sidebarBrand.subtitle}
+                  </span>
+                )}
               </div>
             </div>
           </Link>
         )}
         userMenu={userMenu}
       />
-      <SidebarInset className={cn(isDarkMode ? "bg-black/30" : "bg-transparent", "relative overflow-hidden flex min-h-0 flex-col")}>
+      <SidebarInset
+        className={cn(
+          isDarkMode ? "bg-black/30" : "bg-transparent",
+          "relative overflow-hidden flex min-h-0 flex-col",
+        )}
+      >
         <SearchSiteHeader
-          className={cn("absolute top-0 right-0 left-0 z-20 border-b", "bg-background/40 backdrop-blur-md supports-backdrop-filter:bg-background/30")}
+          className={cn(
+            "absolute top-0 right-0 left-0 z-20 border-b",
+            "bg-background/40 backdrop-blur-md supports-backdrop-filter:bg-background/30",
+          )}
           isMobile={isMobile}
           onSearch={async (query) => {
             if (!query.trim()) return [];
@@ -93,7 +110,13 @@ export function BaseLayout({
             return res.data;
           }}
           onSelectResult={(item) => navigate(item.path)}
-          rightActions={<ModeToggle isDarkMode={isDarkMode} onToggle={() => setTheme(isDarkMode ? "light" : "dark")} theme={theme} />}
+          rightActions={
+            <ModeToggle
+              isDarkMode={isDarkMode}
+              onToggle={() => setTheme(isDarkMode ? "light" : "dark")}
+              theme={theme}
+            />
+          }
         />
         <MainContent>{children}</MainContent>
         <SiteFooter

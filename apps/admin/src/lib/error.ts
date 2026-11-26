@@ -12,8 +12,7 @@ type NormalizedApiError = {
 export function normalizeApiError(error: unknown): NormalizedApiError {
   if (error instanceof APIError) {
     const details = error.details as
-      | { retryIn?: number; retryAt?: number }
-      | undefined;
+      { retryIn?: number; retryAt?: number } | undefined;
     return {
       isApiError: true,
       code: error.code,

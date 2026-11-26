@@ -40,10 +40,18 @@ export function SiteHeader({
   const showSuggestionPanel = isFocused && searchQuery.trim().length > 0;
 
   return (
-    <header className={cn("flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear", className)}>
+    <header
+      className={cn(
+        "flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear",
+        className,
+      )}
+    >
       <div className="flex w-full items-center gap-1 px-4 py-3 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
+        <Separator
+          orientation="vertical"
+          className="mx-2 data-[orientation=vertical]:h-4"
+        />
         <div ref={searchContainerRef} className="relative w-full max-w-sm">
           {isSearching ? (
             <LoaderCircle className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin" />
@@ -57,7 +65,11 @@ export function SiteHeader({
             onKeyDown={(event) => {
               if (event.key === "Escape") onClosePanel();
             }}
-            placeholder={isMobile ? "Cari kamar, penghuni, inv..." : "Cari kamar, penghuni, invoice..."}
+            placeholder={
+              isMobile
+                ? "Cari kamar, penghuni, inv..."
+                : "Cari kamar, penghuni, invoice..."
+            }
             className="h-9 pl-9 text-sm"
           />
           {showSuggestionPanel && (
@@ -66,9 +78,13 @@ export function SiteHeader({
               className="bg-popover text-popover-foreground absolute top-[calc(100%+0.375rem)] z-50 max-h-96 w-full overflow-y-auto rounded-md border shadow-md"
             >
               {searchError ? (
-                <p className="text-destructive px-3 py-2 text-sm">{searchError}</p>
+                <p className="text-destructive px-3 py-2 text-sm">
+                  {searchError}
+                </p>
               ) : searchResults.length === 0 && !isSearching ? (
-                <p className="text-muted-foreground px-3 py-2 text-sm">Data tidak ditemukan.</p>
+                <p className="text-muted-foreground px-3 py-2 text-sm">
+                  Data tidak ditemukan.
+                </p>
               ) : (
                 searchResults.map((item, i) => (
                   <button
@@ -78,7 +94,11 @@ export function SiteHeader({
                     onClick={() => onSelectResult(item)}
                   >
                     <p className="text-sm font-medium">{item.title}</p>
-                    {item.subtitle && <p className="text-muted-foreground text-xs">{item.subtitle}</p>}
+                    {item.subtitle && (
+                      <p className="text-muted-foreground text-xs">
+                        {item.subtitle}
+                      </p>
+                    )}
                   </button>
                 ))
               )}

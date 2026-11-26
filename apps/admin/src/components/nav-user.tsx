@@ -1,4 +1,11 @@
-import { CreditCard, EllipsisVertical, LogOut, Settings, UserCircle, type LucideIcon } from "lucide-react";
+import {
+  CreditCard,
+  EllipsisVertical,
+  LogOut,
+  Settings,
+  UserCircle,
+  type LucideIcon,
+} from "lucide-react";
 import { Logo } from "./logo";
 import {
   DropdownMenu,
@@ -9,7 +16,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@complete-web-app-boilerplate/ui/components/dropdown-menu";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@complete-web-app-boilerplate/ui/components/sidebar";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@complete-web-app-boilerplate/ui/components/sidebar";
 import { Link } from "react-router";
 
 export type UserMenuItem = {
@@ -41,7 +53,10 @@ export function NavUser({ name, email, onSignOut, menu }: NavUserProps) {
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton size="lg" className="data-[open]:bg-sidebar-accent data-[open]:text-sidebar-accent-foreground cursor-pointer" />
+              <SidebarMenuButton
+                size="lg"
+                className="data-[open]:bg-sidebar-accent data-[open]:text-sidebar-accent-foreground cursor-pointer"
+              />
             }
           >
             <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
@@ -49,7 +64,9 @@ export function NavUser({ name, email, onSignOut, menu }: NavUserProps) {
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{name}</span>
-              <span className="text-muted-foreground truncate text-xs">{email}</span>
+              <span className="text-muted-foreground truncate text-xs">
+                {email}
+              </span>
             </div>
             <EllipsisVertical className="ml-auto size-4" />
           </DropdownMenuTrigger>
@@ -67,20 +84,29 @@ export function NavUser({ name, email, onSignOut, menu }: NavUserProps) {
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{name}</span>
-                    <span className="text-muted-foreground truncate text-xs">{email}</span>
+                    <span className="text-muted-foreground truncate text-xs">
+                      {email}
+                    </span>
                   </div>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             {userMenu.map((item) => (
-              <DropdownMenuItem key={item.url} className="cursor-pointer" render={<Link to={item.url} />}>
+              <DropdownMenuItem
+                key={item.url}
+                className="cursor-pointer"
+                render={<Link to={item.url} />}
+              >
                 <item.icon />
                 {item.label}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void onSignOut()} className="cursor-pointer">
+            <DropdownMenuItem
+              onClick={() => void onSignOut()}
+              className="cursor-pointer"
+            >
               <LogOut />
               Keluar
             </DropdownMenuItem>

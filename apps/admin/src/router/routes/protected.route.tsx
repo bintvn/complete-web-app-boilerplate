@@ -15,7 +15,14 @@ function ProtectedRoute() {
   const { signOut, user } = useAuth();
   const { pathname } = useLocation();
 
-  if (!user) return <Navigate to="/auth/sign-in" replace state={{ from: `${pathname}${location.search}${location.hash}` }} />;
+  if (!user)
+    return (
+      <Navigate
+        to="/auth/sign-in"
+        replace
+        state={{ from: `${pathname}${location.search}${location.hash}` }}
+      />
+    );
 
   return (
     <BaseLayout

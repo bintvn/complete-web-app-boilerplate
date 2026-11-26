@@ -6,7 +6,10 @@ type BackgroundShellProps = {
   contentClassName?: string;
 };
 
-export function BackgroundShell({ children, contentClassName }: BackgroundShellProps) {
+export function BackgroundShell({
+  children,
+  contentClassName,
+}: BackgroundShellProps) {
   return (
     <div className="relative min-h-svh">
       <div className="pointer-events-none fixed inset-0 -z-10">

@@ -1,6 +1,12 @@
 import { createContext, type Dispatch, type SetStateAction } from "react";
 import type { UserDTO } from "@/types/dtos/user.dto";
-import type { SignInParams, SignInResponse, SignOutResponse, SignUpParams, SignUpResponse } from "@/types/auth";
+import type {
+  SignInParams,
+  SignInResponse,
+  SignOutResponse,
+  SignUpParams,
+  SignUpResponse,
+} from "@/types/auth";
 import type { TokenResponse } from "@/types/api";
 
 export type AuthContextValue = {

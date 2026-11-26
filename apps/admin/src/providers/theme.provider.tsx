@@ -9,8 +9,15 @@ type ThemeProviderProps = {
   storageKey?: string;
 };
 
-export function ThemeProvider({ children, defaultTheme = "system", storageKey = "vite-ui-theme", ...props }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem(storageKey) as Theme) || defaultTheme);
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+  storageKey = "vite-ui-theme",
+  ...props
+}: ThemeProviderProps) {
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+  );
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -25,7 +32,8 @@ export function ThemeProvider({ children, defaultTheme = "system", storageKey = 
     }
 
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
-    const applySystemTheme = () => applyTheme(systemTheme.matches ? "dark" : "light");
+    const applySystemTheme = () =>
+      applyTheme(systemTheme.matches ? "dark" : "light");
 
     applySystemTheme();
     systemTheme.addEventListener("change", applySystemTheme);

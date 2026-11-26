@@ -18,7 +18,9 @@ export default function QuickActions() {
         New Action
       </Button>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="outline" className="cursor-pointer" />}>
+        <DropdownMenuTrigger
+          render={<Button variant="outline" className="cursor-pointer" />}
+        >
           <Settings className="mr-2 h-4 w-4" />
           Actions
         </DropdownMenuTrigger>

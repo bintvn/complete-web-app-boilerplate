@@ -9,19 +9,9 @@ export interface DialogData {
   okText?: string;
   cancelText?: string;
   cancelVariant?:
-    | "link"
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost";
+    "link" | "default" | "destructive" | "outline" | "secondary" | "ghost";
   okVariant?:
-    | "link"
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost";
+    "link" | "default" | "destructive" | "outline" | "secondary" | "ghost";
 }
 
 interface DialogContextType {

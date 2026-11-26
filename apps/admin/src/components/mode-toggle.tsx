@@ -10,7 +10,13 @@ type ModeToggleProps = {
 
 export function ModeToggle({ isDarkMode, onToggle }: ModeToggleProps) {
   return (
-    <Button type="button" variant="outline" size="icon" onClick={onToggle} className="cursor-pointer">
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      onClick={onToggle}
+      className="cursor-pointer"
+    >
       {isDarkMode ? <Sun className="size-4" /> : <Moon className="size-4" />}
       <span className="sr-only">Toggle theme</span>
     </Button>

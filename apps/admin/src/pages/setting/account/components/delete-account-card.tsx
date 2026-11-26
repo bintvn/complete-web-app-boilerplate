@@ -27,7 +27,8 @@ export function DeleteAccountCard() {
           await apiRequest.account.deleteAccount();
           window.location.reload();
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Gagal menghapus akun";
+          const message =
+            error instanceof Error ? error.message : "Gagal menghapus akun";
           setErrorMessage(message);
           closeDialog();
         } finally {
@@ -46,10 +47,20 @@ export function DeleteAccountCard() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="font-semibold">Hapus Akun</h4>
-            <p className="text-muted-foreground text-sm">Hapus akun Anda dan semua data terkait secara permanen.</p>
-            {errorMessage ? <p className="text-sm text-destructive mt-2">{errorMessage}</p> : null}
+            <p className="text-muted-foreground text-sm">
+              Hapus akun Anda dan semua data terkait secara permanen.
+            </p>
+            {errorMessage ? (
+              <p className="text-sm text-destructive mt-2">{errorMessage}</p>
+            ) : null}
           </div>
-          <Button onClick={() => handleDeleteAccount()} variant="destructive" type="button" className="cursor-pointer" disabled={isDeleting}>
+          <Button
+            onClick={() => handleDeleteAccount()}
+            variant="destructive"
+            type="button"
+            className="cursor-pointer"
+            disabled={isDeleting}
+          >
             {isDeleting ? "Menghapus..." : "Hapus Akun"}
           </Button>
         </div>

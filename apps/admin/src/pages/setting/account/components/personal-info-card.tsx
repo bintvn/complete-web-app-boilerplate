@@ -6,8 +6,18 @@ import { Controller, Form, useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/api";
 import { type AccountCardBaseProps } from "./types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@complete-web-app-boilerplate/ui/components/card";
-import { Field, FieldError, FieldLabel } from "@complete-web-app-boilerplate/ui/components/field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@complete-web-app-boilerplate/ui/components/card";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+} from "@complete-web-app-boilerplate/ui/components/field";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 
@@ -46,7 +56,10 @@ export function PersonalInfoCard({ user, onUserChange }: AccountCardBaseProps) {
       onUserChange(result.data);
       setFeedback("Informasi pribadi berhasil diperbarui.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal memperbarui informasi pribadi";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui informasi pribadi";
       setFeedback(message);
     } finally {
       setIsSubmitting(false);
@@ -57,7 +70,9 @@ export function PersonalInfoCard({ user, onUserChange }: AccountCardBaseProps) {
     <Card>
       <CardHeader>
         <CardTitle>Informasi Pribadi</CardTitle>
-        <CardDescription>Perbarui informasi pribadi Anda yang akan ditampilkan di profil Anda.</CardDescription>
+        <CardDescription>
+          Perbarui informasi pribadi Anda yang akan ditampilkan di profil Anda.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -73,8 +88,14 @@ export function PersonalInfoCard({ user, onUserChange }: AccountCardBaseProps) {
                 </Field>
               )}
             />
-            {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
-            <Button type="submit" className="cursor-pointer" disabled={isSubmitting}>
+            {feedback ? (
+              <p className="text-sm text-muted-foreground">{feedback}</p>
+            ) : null}
+            <Button
+              type="submit"
+              className="cursor-pointer"
+              disabled={isSubmitting}
+            >
               Simpan
             </Button>
           </form>

@@ -5,8 +5,18 @@ import { useState } from "react";
 import { Controller, Form, useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@complete-web-app-boilerplate/ui/components/card";
-import { Field, FieldError, FieldLabel } from "@complete-web-app-boilerplate/ui/components/field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@complete-web-app-boilerplate/ui/components/card";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+} from "@complete-web-app-boilerplate/ui/components/field";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 
@@ -45,7 +55,8 @@ export function PasswordCard() {
       form.reset();
       setFeedback("Password berhasil diperbarui.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Gagal memperbarui password";
+      const message =
+        error instanceof Error ? error.message : "Gagal memperbarui password";
       setFeedback(message);
     } finally {
       setIsSubmitting(false);
@@ -56,7 +67,9 @@ export function PasswordCard() {
     <Card>
       <CardHeader>
         <CardTitle>Ubah Kata Sandi</CardTitle>
-        <CardDescription>Perbarui kata sandi Anda untuk menjaga keamanan akun Anda.</CardDescription>
+        <CardDescription>
+          Perbarui kata sandi Anda untuk menjaga keamanan akun Anda.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -67,7 +80,11 @@ export function PasswordCard() {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Kata Sandi Baru</FieldLabel>
-                  <Input type="password" placeholder="Isi Kata Sandi Baru" {...field} />
+                  <Input
+                    type="password"
+                    placeholder="Isi Kata Sandi Baru"
+                    {...field}
+                  />
                   <FieldError />
                 </Field>
               )}
@@ -78,13 +95,23 @@ export function PasswordCard() {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Konfirmasi Kata Sandi Baru</FieldLabel>
-                  <Input type="password" placeholder="Konfirmasi Kata Sandi Baru" {...field} />
+                  <Input
+                    type="password"
+                    placeholder="Konfirmasi Kata Sandi Baru"
+                    {...field}
+                  />
                   <FieldError />
                 </Field>
               )}
             />
-            {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
-            <Button type="submit" className="cursor-pointer" disabled={isSubmitting}>
+            {feedback ? (
+              <p className="text-sm text-muted-foreground">{feedback}</p>
+            ) : null}
+            <Button
+              type="submit"
+              className="cursor-pointer"
+              disabled={isSubmitting}
+            >
               Simpan
             </Button>
           </form>

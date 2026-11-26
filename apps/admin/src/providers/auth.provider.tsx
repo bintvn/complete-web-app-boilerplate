@@ -11,7 +11,9 @@ type AuthProviderProps = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<TokenResponse | null>(() => apiRequest.getInMemoryAccessToken());
+  const [token, setToken] = useState<TokenResponse | null>(() =>
+    apiRequest.getInMemoryAccessToken(),
+  );
   const [user, setUser] = useState<UserDTO | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,13 +27,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     setLoading,
     async signIn(input) {
-      const result = await fetch(`${import.meta.env.VITE_API_URL}/auth/sign-in`, {
-        body: JSON.stringify(input),
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const result = await fetch(
+        `${import.meta.env.VITE_API_URL}/auth/sign-in`,
+        {
+          body: JSON.stringify(input),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const data = await result.json();
       if (data.errors && Array.isArray(data.errors)) {

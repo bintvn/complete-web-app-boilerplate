@@ -1,6 +1,10 @@
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { useState } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@complete-web-app-boilerplate/ui/components/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@complete-web-app-boilerplate/ui/components/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -35,17 +39,24 @@ function isPathMatch(targetUrl: string, pathname: string) {
 
 export function NavMain({ label, items, pathname }: NavMainProps) {
   const { openMobile, setOpenMobile } = useSidebar();
-  const [manualOpenMap, setManualOpenMap] = useState<Record<string, boolean>>({});
+  const [manualOpenMap, setManualOpenMap] = useState<Record<string, boolean>>(
+    {},
+  );
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="pl-2 select-none">{label}</SidebarGroupLabel>
+      <SidebarGroupLabel className="pl-2 select-none">
+        {label}
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const itemKey = `${label}:${item.url}:${item.title}`;
-          const isRouteMatch = item.items?.some((subItem) => isPathMatch(subItem.url, pathname)) ?? false;
+          const isRouteMatch =
+            item.items?.some((subItem) => isPathMatch(subItem.url, pathname)) ??
+            false;
           const isForcedExpand = item.expand === true;
-          const isOpen = manualOpenMap[itemKey] ?? (isForcedExpand || isRouteMatch);
+          const isOpen =
+            manualOpenMap[itemKey] ?? (isForcedExpand || isRouteMatch);
 
           if (item.items?.length) {
             return (
@@ -61,7 +72,14 @@ export function NavMain({ label, items, pathname }: NavMainProps) {
                 }}
               >
                 <SidebarMenuItem>
-                  <CollapsibleTrigger render={<SidebarMenuButton tooltip={item.title} className="cursor-pointer" />}>
+                  <CollapsibleTrigger
+                    render={
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        className="cursor-pointer"
+                      />
+                    }
+                  >
                     <item.icon />
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[open]/collapsible:rotate-90" />
@@ -73,8 +91,18 @@ export function NavMain({ label, items, pathname }: NavMainProps) {
                           <SidebarMenuSubButton
                             aria-disabled={subItem.disabled}
                             isActive={isPathMatch(subItem.url, pathname)}
-                            onClick={() => !subItem.disabled && openMobile && setOpenMobile(false)}
-                            render={subItem.disabled ? <span /> : <Link to={subItem.url} />}
+                            onClick={() =>
+                              !subItem.disabled &&
+                              openMobile &&
+                              setOpenMobile(false)
+                            }
+                            render={
+                              subItem.disabled ? (
+                                <span />
+                              ) : (
+                                <Link to={subItem.url} />
+                              )
+                            }
                           >
                             {subItem.title}
                           </SidebarMenuSubButton>
@@ -93,7 +121,9 @@ export function NavMain({ label, items, pathname }: NavMainProps) {
                 tooltip={item.title}
                 aria-disabled={item.disabled}
                 isActive={pathname === item.url}
-                onClick={() => !item.disabled && openMobile && setOpenMobile(false)}
+                onClick={() =>
+                  !item.disabled && openMobile && setOpenMobile(false)
+                }
                 render={item.disabled ? <span /> : <Link to={item.url} />}
               >
                 <item.icon />

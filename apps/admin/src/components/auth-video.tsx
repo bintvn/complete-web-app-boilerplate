@@ -50,7 +50,9 @@ export function AuthVideo({ videoUrl }: { videoUrl: string }): ReactNode {
                 <div className="bg-background/35 flex size-16 items-center justify-center rounded-2xl border border-white/20 text-white shadow-lg backdrop-blur-md">
                   <BedDoubleIcon className="size-8" />
                 </div>
-                <div className="text-2xl font-extrabold">{import.meta.env.VITE_APP_NAME}</div>
+                <div className="text-2xl font-extrabold">
+                  {import.meta.env.VITE_APP_NAME}
+                </div>
               </div>
             </>
           )}

@@ -2,12 +2,20 @@ import { Link, useSearchParams } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import { Logo } from "@/components/logo";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@complete-web-app-boilerplate/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@complete-web-app-boilerplate/ui/components/card";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 
 export default function EmailVerificationPage() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
   const [message, setMessage] = useState("Memverifikasi email...");
   const verifiedTokenRef = useRef<string | null>(null);
 
@@ -32,7 +40,9 @@ export default function EmailVerificationPage() {
       })
       .catch((err) => {
         setStatus("error");
-        setMessage(err instanceof Error ? err.message : "Verifikasi email gagal.");
+        setMessage(
+          err instanceof Error ? err.message : "Verifikasi email gagal.",
+        );
       });
   }, [searchParams]);
 
@@ -47,7 +57,11 @@ export default function EmailVerificationPage() {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Verifikasi email</CardTitle>
-          {status === "loading" && <CardDescription>Kami sedang memeriksa tautan verifikasi Anda.</CardDescription>}
+          {status === "loading" && (
+            <CardDescription>
+              Kami sedang memeriksa tautan verifikasi Anda.
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent className="grid gap-4">
           <div

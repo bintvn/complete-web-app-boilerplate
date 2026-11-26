@@ -15,8 +15,24 @@ type ConfirmDialogProps = {
   message?: string;
   cancelText?: string;
   okText?: string;
-  cancelVariant?: "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
-  okVariant?: "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
+  cancelVariant?:
+    | "link"
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | null
+    | undefined;
+  okVariant?:
+    | "link"
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | null
+    | undefined;
   onOpenChange?: (open: boolean) => void;
   onCancel?: () => void;
   onConfirm?: () => void | Promise<void>;
