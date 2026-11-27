@@ -20,7 +20,7 @@ A starter project for building full-stack web applications. It brings a public-f
 
 ## API documentation
 
-Start the development API from the workspace root with `pnpm dev:api`. With the `HOST` and `PORT` values in `apps/api/.env.example`, the Scalar API reference is available at [http://127.0.0.1:3000/docs](http://127.0.0.1:3000/docs), and the OpenAPI JSON is available at [http://127.0.0.1:3000/docs/openapi.json](http://127.0.0.1:3000/docs/openapi.json) or [http://127.0.0.1:3000/openapi.json](http://127.0.0.1:3000/openapi.json).
+Start the development API from the workspace root with `pnpm dev:api`. With the `HOST` and `PORT` values in `apps/api/.env.example`, the Scalar API reference is available at [http://127.0.0.1:3000/docs](http://127.0.0.1:3000/docs), and the OpenAPI JSON is available at [http://127.0.0.1:3000/openapi.json](http://127.0.0.1:3000/openapi.json).
 
 Protected operations require a Bearer access token. Scalar loads its interface assets from jsDelivr.
 
