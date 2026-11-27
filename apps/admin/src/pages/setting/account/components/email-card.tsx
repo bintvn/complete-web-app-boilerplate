@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/api";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Controller, Form, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { type AccountCardBaseProps } from "./types";
 import {
@@ -50,7 +50,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
   });
   const hasUnverifiedEmail = user.isEmailVerified;
   const isVerifying = isVerifyingEmailId === user.id;
-  const verificationCodeValue = verificationCodeByEmailId[user.id];
+  const verificationCodeValue = verificationCodeByEmailId[user.id] ?? "";
 
   async function onSubmit(data: EmailFormValues) {
     if (hasUnverifiedEmail) {
@@ -121,28 +121,31 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            <Controller
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel>Tambah Email</FieldLabel>
-                  <Input
-                    placeholder="contoh@email.com"
-                    disabled={isSubmitting || hasUnverifiedEmail}
-                    {...field}
-                  />
-                  <FieldError />
-                </Field>
-              )}
-            />
-            <Button type="submit" disabled={isSubmitting || hasUnverifiedEmail}>
-              Tambah Email
-            </Button>
-          </form>
-        </Form>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="account-email">Tambah Email</FieldLabel>
+                <Input
+                  id="account-email"
+                  type="email"
+                  aria-invalid={fieldState.invalid}
+                  placeholder="contoh@email.com"
+                  disabled={isSubmitting || hasUnverifiedEmail}
+                  {...field}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+          <Button type="submit" disabled={isSubmitting || hasUnverifiedEmail}>
+            Tambah Email
+          </Button>
+        </form>
         {hasUnverifiedEmail ? (
           <p className="text-xs text-muted-foreground">
             Anda harus verifikasi atau hapus email yang belum terverifikasi

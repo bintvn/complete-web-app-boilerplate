@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { Controller, Form, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/api";
 import { type AccountCardBaseProps } from "./types";
@@ -75,31 +75,36 @@ export function PersonalInfoCard({ user, onUserChange }: AccountCardBaseProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <Field className="self-start">
-                  <FieldLabel>Nama Lengkap</FieldLabel>
-                  <Input placeholder="Nama lengkap anda" {...field} />
-                  <FieldError />
-                </Field>
-              )}
-            />
-            {feedback ? (
-              <p className="text-sm text-muted-foreground">{feedback}</p>
-            ) : null}
-            <Button
-              type="submit"
-              className="cursor-pointer"
-              disabled={isSubmitting}
-            >
-              Simpan
-            </Button>
-          </form>
-        </Form>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <Controller
+            control={form.control}
+            name="name"
+            render={({ field, fieldState }) => (
+              <Field className="self-start" data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="account-name">Nama Lengkap</FieldLabel>
+                <Input
+                  id="account-name"
+                  placeholder="Nama lengkap anda"
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+          {feedback ? (
+            <p className="text-sm text-muted-foreground">{feedback}</p>
+          ) : null}
+          <Button
+            type="submit"
+            className="cursor-pointer"
+            disabled={isSubmitting}
+          >
+            Simpan
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );

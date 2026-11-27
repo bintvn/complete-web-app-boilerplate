@@ -1,10 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { type FormEvent, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Card,
-  CardContent,
-} from "@complete-web-app-boilerplate/ui/components/card";
+import { Card, CardContent } from "@complete-web-app-boilerplate/ui/components/card";
 import { Logo } from "@/components/logo";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 import { Label } from "@complete-web-app-boilerplate/ui/components/label";
@@ -40,8 +37,7 @@ export default function SignUpPage() {
               error: `Akun berhasil dibuat. ${error} Silakan kirim ulang kode.`,
             }
           : {
-              notice:
-                "Akun berhasil dibuat. Periksa email Anda untuk kode OTP.",
+              notice: `Enter the verification code sent to ${email}.`,
             },
       });
     } catch (err) {
@@ -63,22 +59,16 @@ export default function SignUpPage() {
                     <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
                       <Logo size={24} />
                     </div>
-                    <span className="text-xl">
-                      {import.meta.env.VITE_APP_NAME}
-                    </span>
+                    <span className="text-xl">{import.meta.env.VITE_APP_NAME}</span>
                   </Link>
                 </div>
                 <div className="flex flex-col items-center text-center">
                   <h1 className="text-2xl font-bold">Sign Up</h1>
-                  <p className="text-muted-foreground text-balance">
-                    Create your new account.
-                  </p>
+                  <p className="text-muted-foreground text-balance">Create your new account.</p>
                 </div>
                 <form className="grid gap-6" onSubmit={handleSubmit}>
                   {error && (
-                    <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
-                      {error}
-                    </div>
+                    <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">{error}</div>
                   )}
                   <div className="grid gap-4">
                     <div className="grid gap-2">
@@ -90,6 +80,7 @@ export default function SignUpPage() {
                         autoComplete="name"
                         placeholder="Full name"
                         required
+                        disabled={submitting}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -102,6 +93,7 @@ export default function SignUpPage() {
                         autoComplete="email"
                         placeholder="Your email address"
                         required
+                        disabled={submitting}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -114,22 +106,16 @@ export default function SignUpPage() {
                         onChange={(event) => setPassword(event.target.value)}
                         autoComplete="new-password"
                         required
+                        disabled={submitting}
                       />
                     </div>
-                    <Button
-                      type="submit"
-                      className="w-full cursor-pointer"
-                      disabled={submitting}
-                    >
+                    <Button type="submit" className="w-full cursor-pointer" disabled={submitting}>
                       {submitting ? "Creating account..." : "Create Account"}
                     </Button>
                   </div>
                   <div className="text-center text-sm">
                     Have an account?{" "}
-                    <Link
-                      to="/auth/sign-in"
-                      className="underline underline-offset-4"
-                    >
+                    <Link to="/auth/sign-in" className="underline underline-offset-4">
                       Sign In
                     </Link>
                   </div>
@@ -141,10 +127,7 @@ export default function SignUpPage() {
         </Card>
         <div className="text-muted-foreground mt-6 text-center text-xs text-balance">
           By signing up, you agree to the terms of service and privacy policy{" "}
-          <a
-            href={import.meta.env.VITE_BASE_URL}
-            className="text-stone-500 hover:text-gray-400"
-          >
+          <a href={import.meta.env.VITE_BASE_URL} className="text-stone-500 hover:text-gray-400">
             {import.meta.env.VITE_APP_NAME}
           </a>
           .

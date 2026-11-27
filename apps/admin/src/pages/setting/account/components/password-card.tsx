@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Controller, Form, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/api";
 import {
@@ -72,50 +72,60 @@ export function PasswordCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <Controller
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel>Kata Sandi Baru</FieldLabel>
-                  <Input
-                    type="password"
-                    placeholder="Isi Kata Sandi Baru"
-                    {...field}
-                  />
-                  <FieldError />
-                </Field>
-              )}
-            />
-            <Controller
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel>Konfirmasi Kata Sandi Baru</FieldLabel>
-                  <Input
-                    type="password"
-                    placeholder="Konfirmasi Kata Sandi Baru"
-                    {...field}
-                  />
-                  <FieldError />
-                </Field>
-              )}
-            />
-            {feedback ? (
-              <p className="text-sm text-muted-foreground">{feedback}</p>
-            ) : null}
-            <Button
-              type="submit"
-              className="cursor-pointer"
-              disabled={isSubmitting}
-            >
-              Simpan
-            </Button>
-          </form>
-        </Form>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <Controller
+            control={form.control}
+            name="newPassword"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="account-new-password">
+                  Kata Sandi Baru
+                </FieldLabel>
+                <Input
+                  id="account-new-password"
+                  aria-invalid={fieldState.invalid}
+                  type="password"
+                  placeholder="Isi Kata Sandi Baru"
+                  {...field}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="confirmPassword"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="account-confirm-password">
+                  Konfirmasi Kata Sandi Baru
+                </FieldLabel>
+                <Input
+                  id="account-confirm-password"
+                  aria-invalid={fieldState.invalid}
+                  type="password"
+                  placeholder="Konfirmasi Kata Sandi Baru"
+                  {...field}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
+          {feedback ? (
+            <p className="text-sm text-muted-foreground">{feedback}</p>
+          ) : null}
+          <Button
+            type="submit"
+            className="cursor-pointer"
+            disabled={isSubmitting}
+          >
+            Simpan
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );

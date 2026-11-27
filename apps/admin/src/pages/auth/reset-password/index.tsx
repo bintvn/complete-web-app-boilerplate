@@ -3,29 +3,16 @@ import { useEffect, useState } from "react";
 import { isRateLimitApiError, normalizeApiError } from "../../../lib/error";
 import { apiRequest } from "@/lib/api";
 import type { DashboardApiRequestClient } from "@/lib/api/dashboard-api-request";
-import {
-  Card,
-  CardContent,
-} from "@complete-web-app-boilerplate/ui/components/card";
+import { Card, CardContent } from "@complete-web-app-boilerplate/ui/components/card";
 import { Label } from "@complete-web-app-boilerplate/ui/components/label";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 import { Logo } from "@/components/logo";
-type ResetPasswordPageStatus =
-  | "checking"
-  | "form"
-  | "success"
-  | "used"
-  | "expired"
-  | "invalid"
-  | "rate-limited";
+type ResetPasswordPageStatus = "checking" | "form" | "success" | "used" | "expired" | "invalid" | "rate-limited";
 
 const resetPasswordTokenChecks = new Map<string, Promise<{ success: true }>>();
 
-function checkResetPasswordTokenOnce(
-  apiRequest: DashboardApiRequestClient,
-  token: string,
-) {
+function checkResetPasswordTokenOnce(apiRequest: DashboardApiRequestClient, token: string) {
   const existingCheck = resetPasswordTokenChecks.get(token);
 
   if (existingCheck) return existingCheck;
@@ -63,9 +50,7 @@ export default function ResetPasswordPage() {
 
       try {
         setLoading(true);
-        await checkResetPasswordTokenOnce(apiRequest, token).then(() =>
-          setLoading(false),
-        );
+        await checkResetPasswordTokenOnce(apiRequest, token).then(() => setLoading(false));
         if (mounted) setStatus("form");
       } catch (err) {
         if (!mounted) return;
@@ -74,10 +59,7 @@ export default function ResetPasswordPage() {
 
         if (isRateLimitApiError(err)) {
           setStatus("rate-limited");
-          setMessage(
-            normalizedError.message ||
-              "Terlalu banyak percobaan. Coba lagi beberapa saat.",
-          );
+          setMessage(normalizedError.message || "Terlalu banyak percobaan. Coba lagi beberapa saat.");
           return;
         }
 
@@ -124,10 +106,7 @@ export default function ResetPasswordPage() {
       const normalizedError = normalizeApiError(err);
 
       if (isRateLimitApiError(err)) {
-        setError(
-          normalizedError.message ||
-            "Terlalu banyak percobaan. Coba lagi beberapa saat.",
-        );
+        setError(normalizedError.message || "Terlalu banyak percobaan. Coba lagi beberapa saat.");
       } else if (normalizedError.code === "RESET_PASSWORD_TOKEN_USED") {
         setStatus("used");
         setMessage("Link reset password ini sudah digunakan.");
@@ -146,9 +125,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="w-full max-w-sm">
         <Card className="overflow-hidden p-0">
-          <CardContent className="text-muted-foreground p-6 text-center text-sm md:p-8">
-            Memeriksa tautan reset password...
-          </CardContent>
+          <CardContent className="text-muted-foreground p-6 text-center text-sm md:p-8">Memeriksa tautan reset password...</CardContent>
         </Card>
       </div>
     );
@@ -175,7 +152,7 @@ export default function ResetPasswordPage() {
                 <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
                   <Logo size={24} />
                 </div>
-                <span className="text-xl">Living Kost Pro</span>
+                <span className="text-xl">{import.meta.env.VITE_APP_NAME}</span>
               </Link>
             </div>
             <div className="text-center">
@@ -192,22 +169,12 @@ export default function ResetPasswordPage() {
                 {message}
               </div>
             )}
-            {error && (
-              <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">{error}</div>}
             {status === "form" && (
               <>
                 <div className="grid gap-3">
                   <Label htmlFor="password">Password Baru</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <div className="grid gap-3">
                   <Label htmlFor="confirm-password">Ulangi Password Baru</Label>
@@ -229,10 +196,7 @@ export default function ResetPasswordPage() {
                 <Link to="/forgot-password">Kirim ulang link reset</Link>
               </Button>
             )}
-            <Link
-              to="/auth/sign-in"
-              className="text-center text-sm underline underline-offset-4"
-            >
+            <Link to="/auth/sign-in" className="text-center text-sm underline underline-offset-4">
               Back to Sign In
             </Link>
           </form>
