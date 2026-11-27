@@ -1,16 +1,6 @@
 import { createContext, type Dispatch, type SetStateAction } from "react";
-import type {
-  SignInParams,
-  SignInResponse,
-  SignOutResponse,
-  SignUpParams,
-  SignUpResponse,
-} from "@/types/auth";
-import type {
-  AuthMeResponse,
-  AuthRefreshResponse,
-  AuthSignInResponse,
-} from "@complete-web-app-boilerplate/sdk";
+import type { SignInParams, SignOutResponse, SignUpParams, SignUpResponse } from "@/types/auth";
+import type { AuthMeResponse, AuthRefreshResponse, AuthSignInResponse } from "@complete-web-app-boilerplate/sdk";
 
 type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
 
@@ -19,7 +9,7 @@ export type AuthContextValue = {
   user: AuthMeResponse["data"] | null;
   loading: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
-  signIn: (input: SignInParams) => Promise<SignInResponse>;
+  signIn: (input: SignInParams) => Promise<AuthSignInResponse>;
   me: () => Promise<AuthMeResponse["data"]>;
   signUp: (input: SignUpParams) => Promise<SignUpResponse>;
   signOut: () => Promise<SignOutResponse>;

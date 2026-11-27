@@ -1,7 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { AuthContext, type AuthContextValue } from "../contexts/auth.context";
 import { FullscreenLoader } from "@/components/fullscreen-loader";
-import { APIError } from "@/lib/api/error";
 
 import { client } from "@complete-web-app-boilerplate/sdk/client.gen";
 import {
@@ -41,55 +40,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const reqInterceptor = client.interceptors.request.use((request) => {
       if (inMemoryToken?.accessToken) {
-        request.headers.set(
-          "Authorization",
-          `Bearer ${inMemoryToken.accessToken}`,
-        );
+        request.headers.set("Authorization", `Bearer ${inMemoryToken.accessToken}`);
       }
       return request;
     });
 
-    const resInterceptor = client.interceptors.response.use(
-      async (response, request) => {
-        const isAuthEndpoint =
-          request.url.includes("/auth/refresh") ||
-          request.url.includes("/auth/sign-in") ||
-          request.url.includes("/auth/sign-up");
+    const resInterceptor = client.interceptors.response.use(async (response, request) => {
+      const isAuthEndpoint = request.url.includes("/auth/refresh") || request.url.includes("/auth/sign-in") || request.url.includes("/auth/sign-up");
 
-        if (response.status !== 401 || isAuthEndpoint) {
-          return response;
-        }
+      if (response.status !== 401 || isAuthEndpoint) {
+        return response;
+      }
 
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshPromise = (async () => {
-            try {
-              const { data: result, error } = await authRefresh();
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = (async () => {
+          try {
+            const { data: result, error } = await authRefresh();
 
-              if (error || !result?.data) {
-                saveToken(null);
-                setUser(null);
-                return null;
-              }
-
-              saveToken(result.data);
-              return result.data.accessToken;
-            } finally {
-              isRefreshing = false;
+            if (error || !result?.data) {
+              saveToken(null);
+              setUser(null);
+              return null;
             }
-          })();
-        }
 
-        const newAccessToken = await refreshPromise;
-        if (!newAccessToken) return response;
+            saveToken(result.data);
+            return result.data.accessToken;
+          } finally {
+            isRefreshing = false;
+          }
+        })();
+      }
 
-        const retryRequest = new Request(request, {
-          headers: new Headers(request.headers),
-        });
-        retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
-        return fetch(retryRequest);
-      },
-    );
+      const newAccessToken = await refreshPromise;
+      if (!newAccessToken) return response;
+
+      const retryRequest = new Request(request, {
+        headers: new Headers(request.headers),
+      });
+      retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
+      return fetch(retryRequest);
+    });
 
     return () => {
       client.interceptors.request.eject(reqInterceptor);
@@ -108,45 +99,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
-        if (error instanceof APIError) {
-          throw error;
+        if ("code" in error && error.code === "VALIDATION_ERROR" && "errors" in error) {
+          throw new Error(error.errors.join(", "));
+        } else if ("code" in error && error.code !== "VALIDATION_ERROR" && "message" in error) {
+          throw new Error(error.message);
         }
 
-        if ("message" in error) {
-          throw new APIError("UNAUTHORIZED", error.message);
-        }
-
-        if ("errors" in error) {
-          throw new APIError("UNAUTHORIZED", error.errors[0].message);
-        }
-
-        console.error(error);
-
-        throw new Error("Unknown error");
+        throw error;
       }
 
-      if (result.data) {
-        saveToken(result.data);
-      }
-
+      saveToken(result.data);
       setUser(await value.me());
 
-      return {
-        success: true,
-      };
+      return result;
     },
     async me() {
       const { data: result, error } = await authMe();
 
-      if (error) {
-        if (error instanceof APIError) {
-          throw error;
-        }
-
-        console.error(error);
-
-        throw new Error("Unknown error");
-      }
+      if (error) throw new Error(error.message);
 
       return result.data;
     },

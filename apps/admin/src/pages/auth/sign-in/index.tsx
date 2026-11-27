@@ -1,19 +1,13 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { type FormEvent, useState } from "react";
 import Message from "./components/message";
-import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { APIError } from "@/lib/api/error";
 import { AuthVideo } from "@/components/auth-video";
 import { Logo } from "@/components/logo";
-import {
-  Card,
-  CardContent,
-} from "@complete-web-app-boilerplate/ui/components/card";
+import { Card, CardContent } from "@complete-web-app-boilerplate/ui/components/card";
 import { Label } from "@complete-web-app-boilerplate/ui/components/label";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
-import { normalizeApiError } from "@/lib/error";
 
 export default function SignInPage() {
   const { signIn } = useAuth();
@@ -29,10 +23,7 @@ export default function SignInPage() {
   const [needsVerification, setNeedsVerification] = useState(false);
 
   const reason = searchParams.get("reason");
-  const sessionNotice =
-    reason === "session_required"
-      ? "Sesi Anda tidak ditemukan. Silakan login kembali."
-      : null;
+  const sessionNotice = reason === "session_required" ? "Sesi Anda tidak ditemukan. Silakan login kembali." : null;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,60 +33,25 @@ export default function SignInPage() {
     setNeedsVerification(false);
 
     try {
-      setNotice("Silahkan tunggu...");
+      setNotice("Please wait...");
       await signIn({ email, password }).then(() => {
         setNotice(null);
-        setNotice("Login berhasil!");
+        setNotice("Successfully signed in!");
       });
       const from = location.state?.from;
-      const safeFrom =
-        typeof from === "string" &&
-        from.startsWith("/") &&
-        !from.startsWith("/auth")
-          ? from
-          : "/";
+      const safeFrom = typeof from === "string" && from.startsWith("/") && !from.startsWith("/auth") ? from : "/";
       navigate(safeFrom, { replace: true });
     } catch (error) {
       setNotice(null);
 
-      if (error instanceof APIError) {
-        if (error.code === "EMAIL_NOT_VERIFIED") {
-          setNeedsVerification(true);
-          setError(
-            "Email belum diverifikasi. Cek inbox Anda atau kirim ulang email verifikasi.",
-          );
+      if (error instanceof Error) {
+        setError(error.message);
 
-          return;
-        } else if (error.code === "RESET_PASSWORD_NEEDED") {
-          await apiRequest.auth
-            .forgotPassword(email)
-            .then(() => {
-              setNotice(
-                "Mohon mengatur ulang password anda. Silahkan cek email anda, kami sudah kirim link untuk reset password.",
-              );
-            })
-            .catch((error) => {
-              if (error instanceof APIError) {
-                setError(error.message);
-              } else {
-                console.error(error);
+        return;
+      }
 
-                setError("Gagal mengirim email reset password");
-              }
-            });
-
-          return;
-        }
-
-        if (error.message) {
-          setError(error.message);
-
-          return;
-        }
-
-        setError("Unknown API Error");
-
-        console.error(error);
+      if (typeof error === "string") {
+        setError(error);
 
         return;
       }
@@ -113,14 +69,22 @@ export default function SignInPage() {
 
     try {
       // await resendVerification(email);
-      setNotice(
-        "Jika email terdaftar dan belum diverifikasi, tautan baru sudah dikirim.",
-      );
-    } catch (err) {
-      setError(
-        normalizeApiError(err).message ||
-          "Gagal mengirim ulang email verifikasi",
-      );
+      setNotice("Jika email terdaftar dan belum diverifikasi, tautan baru sudah dikirim.");
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+
+        return;
+      }
+
+      if (typeof error === "string") {
+        setError(error);
+
+        return;
+      }
+
+      console.error(error);
+      setError("Unknown error");
     } finally {
       setResending(false);
     }
@@ -137,21 +101,15 @@ export default function SignInPage() {
                   <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
                     <Logo size={22} />
                   </div>
-                  <span className="text-xl">
-                    {import.meta.env.VITE_APP_NAME}
-                  </span>
+                  <span className="text-xl">{import.meta.env.VITE_APP_NAME}</span>
                 </Link>
               </div>
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-muted-foreground text-balance">
-                  Login to your {import.meta.env.VITE_APP_NAME} account
-                </p>
+                <p className="text-muted-foreground text-balance">Login to your {import.meta.env.VITE_APP_NAME} account</p>
               </div>
               {error && <Message tone="error">{error}</Message>}
-              {(notice || sessionNotice) && (
-                <Message tone="success">{notice ?? sessionNotice}</Message>
-              )}
+              {(notice || sessionNotice) && <Message tone="success">{notice ?? sessionNotice}</Message>}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -168,10 +126,7 @@ export default function SignInPage() {
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    to="/auth/forgot-password"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
+                  <Link to="/auth/forgot-password" className="ml-auto text-sm underline-offset-2 hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -190,22 +145,13 @@ export default function SignInPage() {
                 {submitting ? "Signing in..." : "Sign In"}
               </Button>
               {needsVerification && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  disabled={resending || !email}
-                  onClick={handleResend}
-                >
+                <Button type="button" variant="outline" className="w-full" disabled={resending || !email} onClick={handleResend}>
                   {resending ? "Mengirim..." : "Kirim ulang email verifikasi"}
                 </Button>
               )}
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Link
-                  to="/auth/sign-up"
-                  className="underline underline-offset-4"
-                >
+                <Link to="/auth/sign-up" className="underline underline-offset-4">
                   Sign Up
                 </Link>
               </div>
@@ -216,10 +162,7 @@ export default function SignInPage() {
       </Card>
       <div className="text-muted-foreground text-center text-xs text-balance">
         By signing in, you agree to the terms of service and privacy policy{" "}
-        <a
-          href={import.meta.env.VITE_BASE_URL}
-          className="text-stone-500 hover:text-gray-400"
-        >
+        <a href={import.meta.env.VITE_BASE_URL} className="text-stone-500 hover:text-gray-400">
           {import.meta.env.VITE_APP_NAME}
         </a>
         .

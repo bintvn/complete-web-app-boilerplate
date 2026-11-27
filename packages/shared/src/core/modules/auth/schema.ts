@@ -35,14 +35,17 @@ export const changePasswordSchema = z.object({
   revokeOtherSessions: z.boolean().optional(),
 });
 
+export const changeEmailSchema = z.object({
+  newEmail: z.email(),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
-export type ResendEmailVerificationInput = z.infer<
-  typeof resendEmailVerificationSchema
->;
+export type ResendEmailVerificationInput = z.infer<typeof resendEmailVerificationSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
 
 export const authSuccessSchema = z.object({ success: z.literal(true) });
 export const authMessageResponseSchema = authSuccessSchema.extend({

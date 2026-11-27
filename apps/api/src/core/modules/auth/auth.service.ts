@@ -11,6 +11,7 @@ import type {
   AccessTokenPayload,
   AuthenticatedUser,
   AuthResult,
+  ChangeEmailInput,
   ChangePasswordInput,
   ClientMetadata,
   RefreshTokenPayload,
@@ -415,6 +416,25 @@ export class AuthService extends CoreBaseService {
 
     if (input.revokeOtherSessions !== false)
       await this.signoutAll(input.userId, input.currentSessionId);
+  }
+
+  public async changeEmail(input: ChangeEmailInput): Promise<void> {
+    const user = await this.userService.repository.findOne({
+      where: { id: input.userId },
+    });
+
+    if (!user) throw new AuthError('User not found', 404, 'USER_NOT_FOUND');
+
+    const isEmailExists = await this.userService.repository.findOne({
+      where: { email: input.newEmail },
+    });
+
+    if (isEmailExists)
+      throw new AuthError('Email already exists', 409, 'EMAIL_ALREADY_EXISTS');
+
+    user.email = input.newEmail;
+
+    await this.userService.repository.save(user);
   }
 
   public async verifyEmail(email: string, code: string): Promise<void> {

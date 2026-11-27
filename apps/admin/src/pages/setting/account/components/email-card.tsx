@@ -4,20 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Controller, Form, useForm } from "react-hook-form";
 import { z } from "zod";
-import { apiRequest } from "@/lib/api";
 import { type AccountCardBaseProps } from "./types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@complete-web-app-boilerplate/ui/components/card";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@complete-web-app-boilerplate/ui/components/field";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@complete-web-app-boilerplate/ui/components/card";
+import { Field, FieldError, FieldLabel } from "@complete-web-app-boilerplate/ui/components/field";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 import { Badge } from "@complete-web-app-boilerplate/ui/components/badge";
@@ -34,12 +23,8 @@ function sanitizeVerificationCode(rawValue: string) {
 
 export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVerifyingEmailId, setIsVerifyingEmailId] = useState<string | null>(
-    null,
-  );
-  const [verificationCodeByEmailId, setVerificationCodeByEmailId] = useState<
-    Record<string, string>
-  >({});
+  const [isVerifyingEmailId, setIsVerifyingEmailId] = useState<string | null>(null);
+  const [verificationCodeByEmailId, setVerificationCodeByEmailId] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
   const form = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -53,9 +38,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
 
   async function onSubmit(data: EmailFormValues) {
     if (hasUnverifiedEmail) {
-      setFeedback(
-        "Verifikasi atau hapus email yang belum terverifikasi sebelum menambahkan email baru.",
-      );
+      setFeedback("Verifikasi atau hapus email yang belum terverifikasi sebelum menambahkan email baru.");
       return;
     }
 
@@ -69,8 +52,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
       form.reset();
       setFeedback("Email berhasil ditambahkan.");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Gagal menambahkan email";
+      const message = error instanceof Error ? error.message : "Gagal menambahkan email";
       setFeedback(message);
     } finally {
       setIsSubmitting(false);
@@ -103,8 +85,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
       }));
       setFeedback("Email berhasil terverifikasi.");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Gagal verifikasi email";
+      const message = error instanceof Error ? error.message : "Gagal verifikasi email";
       setFeedback(message);
     } finally {
       setIsVerifyingEmailId(null);
@@ -115,9 +96,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
     <Card>
       <CardHeader>
         <CardTitle>Email</CardTitle>
-        <CardDescription>
-          Kelola email akun Anda. Notifikasi akan dikirim ke email primary.
-        </CardDescription>
+        <CardDescription>Kelola email akun Anda. Notifikasi akan dikirim ke email primary.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <Form {...form}>
@@ -128,11 +107,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
               render={({ field }) => (
                 <Field>
                   <FieldLabel>Tambah Email</FieldLabel>
-                  <Input
-                    placeholder="contoh@email.com"
-                    disabled={isSubmitting || hasUnverifiedEmail}
-                    {...field}
-                  />
+                  <Input placeholder="contoh@email.com" disabled={isSubmitting || hasUnverifiedEmail} {...field} />
                   <FieldError />
                 </Field>
               )}
@@ -144,33 +119,23 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
         </Form>
         {hasUnverifiedEmail ? (
           <p className="text-xs text-muted-foreground">
-            Anda harus verifikasi atau hapus email yang belum terverifikasi
-            sebelum menambahkan email baru atau mengganti primary.
+            Anda harus verifikasi atau hapus email yang belum terverifikasi sebelum menambahkan email baru atau mengganti primary.
           </p>
         ) : null}
 
-        {feedback ? (
-          <p className="text-sm text-muted-foreground">{feedback}</p>
-        ) : null}
+        {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
 
         <div className="space-y-3">
           <div key={user.id} className="rounded-md border p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <p className="font-medium break-all">{user.email}</p>
               <div className="flex items-center gap-2">
-                {user.isEmailVerified ? (
-                  <Badge variant="secondary">Verified</Badge>
-                ) : (
-                  <Badge variant="outline">Unverified</Badge>
-                )}
+                {user.isEmailVerified ? <Badge variant="secondary">Verified</Badge> : <Badge variant="outline">Unverified</Badge>}
               </div>
             </div>
             {!user.isEmailVerified ? (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  Kode verifikasi sudah dikirim ke email ini. Masukkan 6 digit
-                  kode untuk verifikasi.
-                </p>
+                <p className="text-xs text-muted-foreground">Kode verifikasi sudah dikirim ke email ini. Masukkan 6 digit kode untuk verifikasi.</p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
                     inputMode="numeric"
@@ -178,9 +143,7 @@ export function EmailCard({ user, onUserChange }: AccountCardBaseProps) {
                     value={verificationCodeValue}
                     disabled={isVerifying}
                     onChange={(event) => {
-                      const onlyDigits = sanitizeVerificationCode(
-                        event.target.value,
-                      );
+                      const onlyDigits = sanitizeVerificationCode(event.target.value);
                       setVerificationCodeByEmailId((previous) => ({
                         ...previous,
                         [user.id]: onlyDigits,

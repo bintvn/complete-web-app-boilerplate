@@ -51,6 +51,11 @@ export interface ChangePasswordInput {
   revokeOtherSessions?: boolean;
 }
 
+export interface ChangeEmailInput {
+  userId: UserEntity['id'];
+  newEmail: string;
+}
+
 export interface AuthenticatedUser {
   id: UserEntity['id'];
   name: string;

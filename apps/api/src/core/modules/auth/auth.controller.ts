@@ -16,6 +16,7 @@ import {
   authSuccessSchema,
   authTokenResponseSchema,
   changePasswordSchema,
+  changeEmailSchema,
   refreshSchema,
   registerSchema,
   resendEmailVerificationSchema,
@@ -209,6 +210,26 @@ export class AuthController {
       toResponse(authMessageResponseSchema, {
         success: true,
         message: 'Password berhasil diperbarui',
+      })
+    );
+  };
+
+  public changeEmail = async (
+    req: AuthenticatedRequest,
+    res: Response
+  ): Promise<void> => {
+    const auth = requireAuth(req);
+    const parsed = changeEmailSchema.parse(req.body);
+
+    await this.authService.changeEmail({
+      userId: auth.sub,
+      newEmail: parsed.newEmail,
+    });
+
+    res.status(200).json(
+      toResponse(authMessageResponseSchema, {
+        success: true,
+        message: 'Email successfully changed',
       })
     );
   };

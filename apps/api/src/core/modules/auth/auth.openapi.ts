@@ -7,6 +7,7 @@ import {
   authSessionsResponseSchema,
   authSuccessSchema,
   authTokenResponseSchema,
+  changeEmailSchema,
   changePasswordSchema,
   refreshSchema,
   registerSchema,
@@ -218,6 +219,21 @@ export function registerAuthOpenApi(service: OpenapiService) {
     responses: {
       200: service.jsonResponse('Password changed.', authMessageResponseSchema),
       403: service.jsonResponse('Invalid old password.', apiErrorSchema),
+      404: errors.notFound,
+      ...bodyErrors,
+    },
+  });
+  register({
+    method: 'post',
+    path: '/change-email',
+    operationId: 'authChangeEmail',
+    summary: 'Change the user email',
+    request: { body: jsonBody(changeEmailSchema) },
+    responses: {
+      200: service.jsonResponse(
+        'Email successfully changed',
+        authMessageResponseSchema
+      ),
       404: errors.notFound,
       ...bodyErrors,
     },

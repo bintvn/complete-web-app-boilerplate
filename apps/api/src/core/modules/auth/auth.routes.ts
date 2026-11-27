@@ -29,6 +29,7 @@ export function createAuthRouter(
     authMiddleware,
     authController.changePassword
   );
+  router.post('/change-email', authMiddleware, authController.changeEmail);
 
   return router;
 }
