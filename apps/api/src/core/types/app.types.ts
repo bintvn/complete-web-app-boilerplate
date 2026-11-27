@@ -5,6 +5,7 @@ export type DeepPartial<T> = {
 };
 
 export interface AppConfig {
+  appName: string;
   server: {
     /**
      * @type {string}

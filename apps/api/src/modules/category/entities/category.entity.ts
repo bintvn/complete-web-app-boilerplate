@@ -19,6 +19,6 @@ export class CategoryEntity extends BaseEntity {
   })
   slug: string;
 
-  @OneToMany(() => CategoryPostEntity, (categoryPost) => categoryPost.post)
+  @OneToMany(() => CategoryPostEntity, (categoryPost) => categoryPost.category)
   categoryPosts?: Relation<CategoryPostEntity[]>;
 }

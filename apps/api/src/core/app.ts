@@ -17,7 +17,12 @@ const createApp = (appConfig: AppConfig, dbMain: DataSource) => {
   const app = express();
   const authMiddleware = createAuthMiddleware(appConfig);
   const coreContainer = createCoreContainer(appConfig, dbMain, authMiddleware);
-  const appContainer = createAppContainer(appConfig, dbMain, authMiddleware);
+  const appContainer = createAppContainer(
+    appConfig,
+    dbMain,
+    coreContainer.openapiModule,
+    authMiddleware
+  );
   const router = createRouter(coreContainer, appContainer);
   const middleware = createMiddlewares();
   const errorHandler = createErrorHandler();

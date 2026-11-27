@@ -9,6 +9,7 @@ import createUserModule from './modules/user/index.js';
 import createVerificationModule from './modules/verification/index.js';
 import type { AppConfig } from './types/app.types.js';
 import type { AuthMiddleware } from './middlewares/auth.middleware.js';
+import createOpenapiModule from './modules/openapi/index.js';
 
 export type CoreContainer = ReturnType<typeof createCoreContainer>;
 
@@ -17,13 +18,23 @@ const createCoreContainer = (
   dataSource: DataSource,
   authMiddleware: AuthMiddleware
 ) => {
+  const openapiModule = createOpenapiModule(config);
   const accessControlModule = createAccessControlModule(
     dataSource,
+    openapiModule,
     authMiddleware
   );
   const emailModule = createEmailModule(config, dataSource);
-  const moduleModule = createModuleModule(dataSource, authMiddleware);
-  const roleModule = createRoleModule(dataSource, authMiddleware);
+  const moduleModule = createModuleModule(
+    dataSource,
+    openapiModule,
+    authMiddleware
+  );
+  const roleModule = createRoleModule(
+    dataSource,
+    openapiModule,
+    authMiddleware
+  );
   const sessionModule = createSessionModule(dataSource);
   const verificationModule = createVerificationModule(config, dataSource);
   const userModule = createUserModule(
@@ -31,6 +42,7 @@ const createCoreContainer = (
     {
       roleService: roleModule.service,
     },
+    openapiModule,
     authMiddleware
   );
   const authModule = createAuthModule(
@@ -42,10 +54,12 @@ const createCoreContainer = (
       userService: userModule.service,
       verificationService: verificationModule.service,
     },
+    openapiModule,
     authMiddleware
   );
 
   return {
+    openapiModule,
     accessControlModule,
     authModule,
     emailModule,

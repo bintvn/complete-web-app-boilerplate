@@ -3,6 +3,7 @@ import {
   mkdir,
   open,
   readFile,
+  rename,
   rm,
   rmdir,
   writeFile,
@@ -13,6 +14,43 @@ import * as prettier from 'prettier';
 
 const moduleNamePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const windowsDeviceNamePattern = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/;
+const reservedNames = new Set([
+  'access-control',
+  'auth',
+  'category',
+  'mail',
+  'modules',
+  'openapi',
+  'post',
+  'role',
+  'session',
+  'user',
+  'verification',
+]);
+const reservedPaths = new Set([
+  'access-control',
+  'auth',
+  'categories',
+  'docs',
+  'modules',
+  'posts',
+  'roles',
+  'users',
+]);
+
+async function formatFile(filePath: string, contents: string) {
+  const config = await prettier.resolveConfig(filePath, { editorconfig: true });
+  return prettier.format(contents, { ...config, filepath: filePath });
+}
+
+async function readIfPresent(filePath: string) {
+  try {
+    return await readFile(filePath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    return undefined;
+  }
+}
 
 export const generateModule = async (name: string): Promise<string> => {
   if (name.length > 64 || !moduleNamePattern.test(name)) {
@@ -25,11 +63,18 @@ export const generateModule = async (name: string): Promise<string> => {
     throw new Error(`Module name "${name}" is reserved on Windows`);
   }
 
+  const routePath = `${name}s`;
+  if (reservedNames.has(name) || reservedPaths.has(routePath)) {
+    throw new Error(
+      `Module "${name}" or route "/${routePath}" is already reserved`
+    );
+  }
+
   const parts = name.split('-');
   const pascalName = parts
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
-  const dto = `${pascalName.charAt(0).toLowerCase()}${pascalName.slice(1)}Dto`;
+  const camelName = pascalName.charAt(0).toLowerCase() + pascalName.slice(1);
   const entity = `${pascalName}Entity`;
   const service = `${pascalName}Service`;
   const baseServiceAlias =
@@ -43,9 +88,31 @@ export const generateModule = async (name: string): Promise<string> => {
     new URL('../../modules/', import.meta.url)
   );
   const moduleDirectory = join(modulesDirectory, name);
+  const lockDirectory = join(modulesDirectory, `.${name}.generate.lock`);
+  const indexPath = join(moduleDirectory, 'index.ts');
+  const sharedModuleDirectory = fileURLToPath(
+    new URL(
+      `../../../../../packages/shared/src/modules/${name}/`,
+      import.meta.url
+    )
+  );
 
-  const files = {
-    'index.ts': `import type { DataSource } from 'typeorm';
+  const sharedSchema = `import { z } from 'zod';
+
+export const create${pascalName}Schema = z.strictObject({
+  name: z.string().trim().min(1).max(255),
+});
+export const update${pascalName}Schema = create${pascalName}Schema.partial();
+export const ${camelName}ResponseSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+});
+export type Create${pascalName} = z.infer<typeof create${pascalName}Schema>;
+export type Update${pascalName} = z.infer<typeof update${pascalName}Schema>;
+export type ${pascalName}Response = z.infer<typeof ${camelName}ResponseSchema>;
+`;
+
+  const legacyIndex = `import type { DataSource } from 'typeorm';
 import { ${entity} } from './entities/${name}.entity.js';
 import ${service} from './${name}.service.js';
 import ${controller} from './${name}.controller.js';
@@ -74,11 +141,49 @@ const create${pascalName}Module = (
     service,
     controller,
     router,
-    routePath: '${name}s',
+    routePath: '${routePath}',
   };
 };
 
 export default create${pascalName}Module;
+`;
+  const openApiImport = `import type { OpenapiModule } from '../../core/modules/openapi/index.js';
+import { ${camelName}RoutePath, register${pascalName}OpenApi } from './${name}.openapi.js';`;
+  const moduleIndex = legacyIndex
+    .replace('export interface', `${openApiImport}\n\nexport interface`)
+    .replace(
+      '  authMiddleware: AuthMiddleware,',
+      '  openapiModule: OpenapiModule,\n  authMiddleware: AuthMiddleware,'
+    )
+    .replace(
+      '  return {',
+      `  register${pascalName}OpenApi(openapiModule.service);\n\n  return {`
+    )
+    .replace(`routePath: '${routePath}'`, `routePath: ${camelName}RoutePath`);
+
+  const apiFiles = {
+    'index.ts': moduleIndex,
+    [`${name}.openapi.ts`]: `import {
+  create${pascalName}Schema,
+  ${camelName}ResponseSchema,
+  update${pascalName}Schema,
+} from '@complete-web-app-boilerplate/shared/modules/${name}';
+import type OpenapiService from '../../core/modules/openapi/openapi.service.js';
+import { registerCrudOpenApi } from '../../core/modules/openapi/register-crud.openapi.js';
+
+export const ${camelName}RoutePath = '${routePath}';
+const responseSchema = ${camelName}ResponseSchema.meta({ id: '${pascalName}' });
+
+export function register${pascalName}OpenApi(service: OpenapiService) {
+  registerCrudOpenApi(service, {
+    routePath: ${camelName}RoutePath,
+    resource: '${name}',
+    tag: '${parts.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')}s',
+    createSchema: create${pascalName}Schema,
+    updateSchema: update${pascalName}Schema,
+    responseSchema,
+  });
+}
 `,
     [`entities/${name}.entity.ts`]: `import { Column, Entity } from 'typeorm';
 import { BaseEntity as EntityBase } from '../../../core/base.entity.js';
@@ -92,24 +197,6 @@ export class ${entity} extends EntityBase {
   })
   name: string;
 }
-`,
-    [`${name}.schema.ts`]: `import { z } from 'zod';
-
-export const create${pascalName}Schema = z.strictObject({
-  name: z.string().trim().min(1).max(255),
-});
-export const update${pascalName}Schema = create${pascalName}Schema.partial();
-export type Create${pascalName} = z.infer<typeof create${pascalName}Schema>;
-export type Update${pascalName} = z.infer<typeof update${pascalName}Schema>;
-`,
-    [`${name}.dto.ts`]: `import type { ${entity} } from './entities/${name}.entity.js';
-
-const ${dto} = (entity: ${entity}) => ({
-  id: entity.id,
-  name: entity.name,
-});
-
-export default ${dto};
 `,
     [`${name}.service.ts`]: `import type { Repository } from 'typeorm';
 import type { ${entity} } from './entities/${name}.entity.js';
@@ -129,11 +216,12 @@ export default class ${service} extends ${baseServiceAlias ?? 'BaseService'}<
     [`${name}.controller.ts`]: `import type { Request, Response } from 'express';
 import { NotFoundError } from '../../core/errors.js';
 import { parseBody, parsePatchId } from '../../core/validation.js';
-import ${dto} from './${name}.dto.js';
+import { toResponse } from '../../core/response-serializer.js';
 import {
   create${pascalName}Schema,
+  ${camelName}ResponseSchema,
   update${pascalName}Schema,
-} from './${name}.schema.js';
+} from '@complete-web-app-boilerplate/shared/modules/${name}';
 import type ${service} from './${name}.service.js';
 
 export default class ${controller} {
@@ -143,9 +231,10 @@ export default class ${controller} {
 
   getAll = async (_request: Request, response: Response) => {
     const records = await this.service.getAll();
-    response.json({ data: records.map(${dto}) });
+    response.json({
+      data: records.map((record) => toResponse(${camelName}ResponseSchema, record)),
+    });
   };
-
   get = async (request: Request<{ id: string }>, response: Response) => {
     const record = await this.service.get(request.params.id);
 
@@ -154,14 +243,14 @@ export default class ${controller} {
         \`\${this.name} with ID \${request.params.id} not found\`,
       );
 
-    response.json({ data: ${dto}(record) });
+    response.json({ data: toResponse(${camelName}ResponseSchema, record) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(create${pascalName}Schema, request.body);
     const record = await this.service.create(data);
 
-    response.status(201).json({ data: ${dto}(record) });
+    response.status(201).json({ data: toResponse(${camelName}ResponseSchema, record) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {
@@ -202,12 +291,62 @@ export default create${pascalName}Router;
 `,
   };
 
+  const files = new Map(
+    Object.entries(apiFiles).map(([filename, contents]) => [
+      join(moduleDirectory, filename),
+      contents,
+    ])
+  );
+  files.set(join(sharedModuleDirectory, 'schema.ts'), sharedSchema);
+
   const createdDirectories: string[] = [];
   const createdFiles: string[] = [];
+  const stagedIndex = join(lockDirectory, 'index.tmp');
+
   try {
+    await mkdir(lockDirectory);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    throw new Error(`Module generation is locked at "${lockDirectory}"`, {
+      cause: error,
+    });
+  }
+
+  try {
+    const existingIndex = await readIfPresent(indexPath);
+    let upgradeIndex = false;
+    if (existingIndex !== undefined) {
+      const formattedIndex = await formatFile(indexPath, existingIndex);
+      if (formattedIndex === (await formatFile(indexPath, legacyIndex))) {
+        const existingController = await readIfPresent(
+          join(moduleDirectory, `${name}.controller.ts`)
+        );
+        if (
+          existingController &&
+          !existingController.includes(
+            `@complete-web-app-boilerplate/shared/modules/${name}`
+          )
+        ) {
+          throw new Error(
+            `Move the request and response schemas for "${name}" to packages/shared/src/modules/${name}/schema.ts and update the controller imports before generating OpenAPI.`
+          );
+        }
+        await writeFile(stagedIndex, await formatFile(indexPath, moduleIndex), {
+          flag: 'wx',
+        });
+        upgradeIndex = true;
+      } else if (
+        formattedIndex !== (await formatFile(indexPath, moduleIndex))
+      ) {
+        throw new Error(
+          `Custom factory "${indexPath}" could not be upgraded safely. Add the OpenapiModule argument and register${pascalName}OpenApi(openapiModule.service), then wire the factory into apps/api/src/bootstrap.ts.`
+        );
+      }
+    }
     for (const directory of [
       moduleDirectory,
       join(moduleDirectory, 'entities'),
+      sharedModuleDirectory,
     ]) {
       try {
         await mkdir(directory);
@@ -223,8 +362,7 @@ export default create${pascalName}Router;
       }
     }
 
-    for (const [filename, contents] of Object.entries(files)) {
-      const filePath = join(moduleDirectory, filename);
+    for (const [filePath, contents] of files) {
       let file;
       try {
         file = await open(filePath, 'wx');
@@ -248,15 +386,15 @@ export default create${pascalName}Router;
 
     for (const filePath of createdFiles) {
       const contents = await readFile(filePath, 'utf8');
-      const config = await prettier.resolveConfig(filePath, {
-        editorconfig: true,
-      });
-      const formatted = await prettier.format(contents, {
-        ...config,
-        filepath: filePath,
-      });
+      const formatted = await formatFile(filePath, contents);
 
       if (formatted !== contents) await writeFile(filePath, formatted);
+    }
+    if (upgradeIndex) {
+      if ((await readIfPresent(indexPath)) !== existingIndex) {
+        throw new Error(`Factory changed during generation: "${indexPath}"`);
+      }
+      await rename(stagedIndex, indexPath);
     }
   } catch (error) {
     try {
@@ -274,10 +412,9 @@ export default create${pascalName}Router;
       );
     }
     throw error;
-  }
-
-  if (createdFiles.length === 0) {
-    throw new Error('Module Exists!');
+  } finally {
+    await rm(stagedIndex, { force: true });
+    await rmdir(lockDirectory);
   }
 
   return moduleDirectory;

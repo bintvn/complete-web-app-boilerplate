@@ -1,6 +1,6 @@
 import { BaseService } from '../../base.service.js';
 import type { Repository } from 'typeorm';
-import type { CreateAccessControl } from './access-control.schema.js';
+import type { CreateAccessControl } from '@complete-web-app-boilerplate/shared/core/modules/access-control';
 import type { AccessControlEntity } from './entities/access-control.entity.js';
 
 export default class AccessControlService extends BaseService<AccessControlEntity> {

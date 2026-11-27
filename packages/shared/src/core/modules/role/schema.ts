@@ -1,5 +1,6 @@
-import { z } from 'zod';
-import { descriptionSchema } from '../../../core/validation.js';
+import { z } from "zod";
+import { baseResponseSchema } from "../../base-response.schema.js";
+import { descriptionSchema } from "../../validation.schema.js";
 
 const name = z
   .string()
@@ -19,3 +20,10 @@ export const createRoleSchema = z.strictObject({
 export const updateRoleSchema = createRoleSchema.partial();
 export type CreateRole = z.infer<typeof createRoleSchema>;
 export type UpdateRole = z.infer<typeof updateRoleSchema>;
+
+export const roleResponseSchema = baseResponseSchema.extend({
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+});
+export type RoleResponse = z.infer<typeof roleResponseSchema>;

@@ -1,19 +1,10 @@
-import { z } from 'zod';
+import type { z } from 'zod';
+import { patchIdSchema } from '@complete-web-app-boilerplate/shared/core/validation';
 import {
   BadRequestError,
   ValidationError,
   type ErrorDetail,
 } from './errors.js';
-
-const uuid = z.uuid();
-const maxDescriptionBytes = 65_535;
-
-export const descriptionSchema = z
-  .string()
-  .refine((value) => Buffer.byteLength(value, 'utf8') <= maxDescriptionBytes, {
-    error: 'Description must be at most 65,535 bytes in UTF-8',
-  })
-  .optional();
 
 export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
@@ -42,7 +33,7 @@ export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
 }
 
 export function parsePatchId(value: string): string {
-  if (!uuid.safeParse(value).success) {
+  if (!patchIdSchema.safeParse(value).success) {
     throw new BadRequestError('Invalid resource ID', [
       { field: 'id', code: 'invalid_format', message: 'Expected a UUID' },
     ]);

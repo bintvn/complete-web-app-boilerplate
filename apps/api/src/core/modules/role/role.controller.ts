@@ -1,8 +1,21 @@
 import type { Request, Response } from 'express';
 import type RoleService from './role.service.js';
-import { createRoleSchema, updateRoleSchema } from './role.schema.js';
-import { roleDto } from './role.dto.js';
+import {
+  createRoleSchema,
+  roleResponseSchema,
+  updateRoleSchema,
+} from '@complete-web-app-boilerplate/shared/core/modules/role';
 import { parseBody, parsePatchId } from '../../validation.js';
+
+import {
+  serializeRelationDates,
+  toResponse,
+} from '../../response-serializer.js';
+import type { RoleEntity } from './entities/role.entity.js';
+
+function serializeRole(value: RoleEntity) {
+  return toResponse(roleResponseSchema, serializeRelationDates(value));
+}
 
 export default class RoleController {
   readonly name = 'role';
@@ -12,7 +25,7 @@ export default class RoleController {
   getAll = async (_request: Request, response: Response) => {
     const roles = await this.service.getAll();
 
-    response.json({ data: roles.map(roleDto) });
+    response.json({ data: roles.map(serializeRole) });
   };
 
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -21,14 +34,14 @@ export default class RoleController {
     if (!role)
       throw new Error(`${this.name} with ID ${request.params.id} not found`);
 
-    response.json({ data: roleDto(role) });
+    response.json({ data: serializeRole(role) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(createRoleSchema, request.body);
     const role = await this.service.create(data);
 
-    response.status(201).json({ data: roleDto(role) });
+    response.status(201).json({ data: serializeRole(role) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

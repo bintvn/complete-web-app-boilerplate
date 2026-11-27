@@ -2,11 +2,28 @@ import type { Request, Response } from 'express';
 import { parseBody, parsePatchId } from '../../core/validation.js';
 import {
   createCategorySchema,
+  categoryResponseSchema,
   updateCategorySchema,
-} from './category.schema.js';
+} from '@complete-web-app-boilerplate/shared/modules/category';
 import type CategoryService from './category.service.js';
 import { NotFoundError } from '../../core/errors.js';
-import categoryDto from './category.dto.js';
+import {
+  serializeRelationDates,
+  toResponse,
+} from '../../core/response-serializer.js';
+import type { CategoryEntity } from './entities/category.entity.js';
+
+function serializeCategory(category: CategoryEntity) {
+  return toResponse(
+    categoryResponseSchema,
+    Object.assign({}, category, {
+      posts:
+        category.categoryPosts?.map(({ post }) =>
+          post ? serializeRelationDates(post) : null
+        ) ?? [],
+    })
+  );
+}
 
 export default class CategoryController {
   readonly name = 'category';
@@ -14,27 +31,27 @@ export default class CategoryController {
   constructor(private readonly service: CategoryService) {}
 
   getAll = async (_request: Request, response: Response) => {
-    const categorys = await this.service.getAll();
+    const categories = await this.service.getAllWithRelations();
 
-    response.json({ data: categorys.map(categoryDto) });
+    response.json({ data: categories.map(serializeCategory) });
   };
 
   get = async (request: Request<{ id: string }>, response: Response) => {
-    const category = await this.service.get(request.params.id);
+    const category = await this.service.getWithRelations(request.params.id);
 
     if (!category)
       throw new NotFoundError(
         `${this.name} with ID ${request.params.id} not found`
       );
 
-    response.json({ data: categoryDto(category) });
+    response.json({ data: serializeCategory(category) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(createCategorySchema, request.body);
     const category = await this.service.create(data);
 
-    response.status(201).json({ data: categoryDto(category) });
+    response.status(201).json({ data: serializeCategory(category) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

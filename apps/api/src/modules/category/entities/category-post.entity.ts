@@ -23,7 +23,7 @@ export class CategoryPostEntity extends BaseEntity {
     nullable: false,
   })
   @JoinColumn({
-    name: 'category_id',
+    name: 'post_id',
     referencedColumnName: 'id',
     foreignKeyConstraintName: 'FK_category_post_post_id',
   })

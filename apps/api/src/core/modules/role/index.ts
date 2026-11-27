@@ -1,4 +1,6 @@
 import RoleController from './role.controller.js';
+import type { OpenapiModule } from '../openapi/index.js';
+import { roleRoutePath, registerRoleOpenApi } from './role.openapi.js';
 import RoleService from './role.service.js';
 import createRoleRouter from './role.route.js';
 import { RoleEntity } from './entities/role.entity.js';
@@ -16,6 +18,7 @@ export interface RoleModule extends Module {
 
 const createRoleModule = (
   dataSource: DataSource,
+  openapiModule: OpenapiModule,
   authMiddleware: AuthMiddleware
 ): RoleModule => {
   const service = new RoleService(
@@ -25,13 +28,15 @@ const createRoleModule = (
   const controller = new RoleController(service);
   const router = createRoleRouter(controller, authMiddleware);
 
+  registerRoleOpenApi(openapiModule.service);
+
   return {
     name: 'role',
     entities: [RoleEntity, RoleUserEntity],
     service,
     controller,
     router,
-    routePath: 'roles',
+    routePath: roleRoutePath,
   };
 };
 

@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "turbo run dev --env-mode=loose",
+    "dev": "pnpm run build:shared && turbo run dev --env-mode=loose",
     "dev:web": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/web",
     "dev:admin": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/admin",
-    "dev:api": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/api",
+    "dev:api": "pnpm run build:shared && turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/api --filter=@complete-web-app-boilerplate/shared",
     "dev:email-template": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/email-template",
     "start:api": "pnpm --filter @complete-web-app-boilerplate/api start",
     "api:generate:module": "pnpm --filter @complete-web-app-boilerplate/api generate:module",

@@ -8,7 +8,14 @@ if (!moduleName) {
   process.exit(1);
 }
 
-generateModule(moduleName).catch((error: unknown) => {
-  console.error('❌ Error:', error);
-  process.exit(1);
-});
+generateModule(moduleName)
+  .then((moduleDirectory) => {
+    console.log(`Module files are ready in ${moduleDirectory}`);
+    console.log(
+      'Register the module factory in apps/api/src/bootstrap.ts to enable its routes and OpenAPI documentation.'
+    );
+  })
+  .catch((error: unknown) => {
+    console.error('❌ Error:', error);
+    process.exit(1);
+  });

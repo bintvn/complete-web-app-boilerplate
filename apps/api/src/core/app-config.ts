@@ -5,6 +5,7 @@ import type {
 } from './types/app.types.js';
 
 const defaultConfig: AppConfig = {
+  appName: 'API',
   server: {
     host: 'localhost',
     port: 3000,

@@ -5,7 +5,7 @@ import {
   updateUserSchema,
   type CreateUser,
   type UpdateUser,
-} from './user.schema.js';
+} from '@complete-web-app-boilerplate/shared/core/modules/user';
 import { BaseService } from '../../../core/base.service.js';
 import passwordUtil from '../../utils/password.util.js';
 import { RoleEntity } from '../role/entities/role.entity.js';

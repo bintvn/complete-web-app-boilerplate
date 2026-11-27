@@ -1,8 +1,21 @@
 import type { Request, Response } from 'express';
 import { parseBody, parsePatchId } from '../../validation.js';
 import type ModuleService from './module.service.js';
-import { createModuleSchema, updateModuleSchema } from './module.schema.js';
-import { moduleDto } from './module.dto.js';
+import {
+  createModuleSchema,
+  moduleResponseSchema,
+  updateModuleSchema,
+} from '@complete-web-app-boilerplate/shared/core/modules/module';
+
+import {
+  serializeRelationDates,
+  toResponse,
+} from '../../response-serializer.js';
+import type { ModuleEntity } from './entities/module.entity.js';
+
+function serializeModule(value: ModuleEntity) {
+  return toResponse(moduleResponseSchema, serializeRelationDates(value));
+}
 
 export default class ModuleController {
   readonly name = 'module';
@@ -10,7 +23,7 @@ export default class ModuleController {
   constructor(private readonly service: ModuleService) {}
 
   getAll = async (_request: Request, response: Response) => {
-    response.json({ data: (await this.service.getAll()).map(moduleDto) });
+    response.json({ data: (await this.service.getAll()).map(serializeModule) });
   };
 
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -20,7 +33,7 @@ export default class ModuleController {
       throw new Error(`${this.name} with ID ${request.params.id} not found`);
 
     response.json({
-      data: moduleDto(module),
+      data: serializeModule(module),
     });
   };
 
@@ -28,7 +41,7 @@ export default class ModuleController {
     const data = parseBody(createModuleSchema, request.body);
     const module = await this.service.create(data);
 
-    response.status(201).json({ data: moduleDto(module) });
+    response.status(201).json({ data: serializeModule(module) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

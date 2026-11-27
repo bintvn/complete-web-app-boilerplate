@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "cross-env-shell NODE_ENV=development tsx watch src/server.ts",
+    "dev": "cross-env-shell NODE_ENV=development tsx watch --include ../../packages/shared/dist src/server.ts",
     "generate:module": "tsx src/core/generator/generate-module.ts",
     "build": "node scripts/clean-dist.mjs && npm run typecheck && npm run lint && tsc",
     "start": "cross-env-shell NODE_ENV=production node dist/server.js",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "test:openapi": "cross-env NODE_ENV=development REDIRECT_TRAILING_SLASH=false tsx --test test/openapi.test.mjs && cross-env NODE_ENV=production REDIRECT_TRAILING_SLASH=true tsx --test test/openapi.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -26,8 +27,11 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "@complete-web-app-boilerplate/email-template": "workspace:*",
+    "@complete-web-app-boilerplate/shared": "workspace:*",
     "@node-rs/argon2": "^2.2.2",
+    "@scalar/express-api-reference": "^0.10.42",
     "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

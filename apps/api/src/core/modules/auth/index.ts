@@ -1,4 +1,6 @@
 import { AuthController } from './auth.controller.js';
+import type { OpenapiModule } from '../openapi/index.js';
+import { authRoutePath, registerAuthOpenApi } from './auth.openapi.js';
 import { AuthService } from './auth.service.js';
 import { createAuthRouter } from './auth.routes.js';
 import type MailService from '../mail/mail.service.js';
@@ -28,11 +30,14 @@ export interface AuthModule extends Module {
 const createAuthModule = (
   config: AppConfig,
   dependencies: AuthModuleDependencies,
+  openapiModule: OpenapiModule,
   authMiddleware: AuthMiddleware
 ): AuthModule => {
   const service = new AuthService(dependencies, config);
   const controller = new AuthController(config, service);
   const router = createAuthRouter(controller, authMiddleware);
+
+  registerAuthOpenApi(openapiModule.service);
 
   return {
     name: 'access-control',
@@ -40,7 +45,7 @@ const createAuthModule = (
     router,
     controller,
     service,
-    routePath: 'auth',
+    routePath: authRoutePath,
   };
 };
 

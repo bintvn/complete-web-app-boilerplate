@@ -1,9 +1,13 @@
 import type { Request, Response } from 'express';
 import { parseBody, parsePatchId } from '../../../core/validation.js';
-import { createUserSchema, updateUserSchema } from './user.schema.js';
+import {
+  createUserSchema,
+  updateUserSchema,
+} from '@complete-web-app-boilerplate/shared/core/modules/user';
 import type UserService from './user.service.js';
 import { NotFoundError } from '../../../core/errors.js';
-import { userDto } from './user.dto.js';
+
+import { serializeUser } from './user.serializer.js';
 
 export default class UserController {
   readonly name = 'user';
@@ -13,7 +17,7 @@ export default class UserController {
   getAll = async (_request: Request, response: Response) => {
     const users = await this.service.getAll();
 
-    response.json({ data: users.map(userDto) });
+    response.json({ data: users.map(serializeUser) });
   };
 
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -24,14 +28,14 @@ export default class UserController {
         `${this.name} with ID ${request.params.id} not found`
       );
 
-    response.json({ data: userDto(user) });
+    response.json({ data: serializeUser(user) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(createUserSchema, request.body);
     const user = await this.service.create(data);
 
-    response.status(201).json({ data: userDto(user) });
+    response.status(201).json({ data: serializeUser(user) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

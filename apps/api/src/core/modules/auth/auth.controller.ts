@@ -6,18 +6,34 @@ import {
 } from '../../middlewares/auth.middleware.js';
 import type { SessionEntity } from '../session/entities/session.entity.js';
 import { AuthError } from '../../errors.js';
-import type { ClientMetadata } from '../../types/auth.types.js';
+import { serializeDate, toResponse } from '../../response-serializer.js';
+import type { SessionInfo, ClientMetadata } from '../../types/auth.types.js';
 import {
+  authMeResponseSchema,
+  authMessageResponseSchema,
+  authSessionResponseSchema,
+  authSessionsResponseSchema,
+  authSuccessSchema,
+  authTokenResponseSchema,
   changePasswordSchema,
   refreshSchema,
   registerSchema,
   resendEmailVerificationSchema,
   signInSchema,
   verifyEmailSchema,
-} from './auth.schema.js';
+} from '@complete-web-app-boilerplate/shared/core/modules/auth';
 import { IS_DEV } from '../../constants.js';
-import { userDto } from '../user/user.dto.js';
+import { serializeUser } from '../user/user.serializer.js';
 import type { AppConfig } from '../../types/app.types.js';
+
+function serializeSession(session: SessionInfo) {
+  return {
+    ...session,
+    createdAt: serializeDate(session.createdAt),
+    lastUsedAt: serializeDate(session.lastUsedAt),
+    expiresAt: serializeDate(session.expiresAt),
+  };
+}
 
 export class AuthController {
   private readonly authService: AuthService;
@@ -33,9 +49,7 @@ export class AuthController {
     const parsed = registerSchema.parse(req.body);
     await this.authService.register(parsed);
 
-    res.status(201).json({
-      success: true,
-    });
+    res.status(201).json(toResponse(authSuccessSchema, { success: true }));
   };
 
   public signin = async (req: Request, res: Response): Promise<void> => {
@@ -45,22 +59,21 @@ export class AuthController {
       metadata: this.extractMetadata(req),
     });
 
-    this.setCookie(res, result.refreshToken);
-
-    res.status(200).json({
+    const response = toResponse(authTokenResponseSchema, {
       success: true,
       data: result,
     });
+    this.setCookie(res, response.data.refreshToken);
+    res.status(200).json(response);
   };
 
   public refresh = async (req: Request, res: Response): Promise<void> => {
     const parsed = !req.body ? undefined : refreshSchema.parse(req.body);
-    const cookieToken =
-      typeof (req.signedCookies as Record<string, unknown>).token === 'string'
-        ? (req.signedCookies as { token: string }).token
-        : null;
-
-    const refreshToken = parsed?.refreshToken || cookieToken;
+    const cookies = req.signedCookies as Record<string, unknown> | undefined;
+    const cookieToken = cookies?.['token'];
+    const refreshToken =
+      parsed?.refreshToken ||
+      (typeof cookieToken === 'string' ? cookieToken : null);
 
     if (!refreshToken)
       throw new AuthError('Refresh token not found', 401, 'TOKEN_MISSING');
@@ -70,12 +83,12 @@ export class AuthController {
       this.extractMetadata(req)
     );
 
-    this.setCookie(res, result.refreshToken);
-
-    res.status(200).json({
+    const response = toResponse(authTokenResponseSchema, {
       success: true,
       data: result,
     });
+    this.setCookie(res, response.data.refreshToken);
+    res.status(200).json(response);
   };
 
   public me = async (
@@ -85,10 +98,12 @@ export class AuthController {
     const auth = requireAuth(req);
     const data = await this.authService.me(auth.sub);
 
-    res.status(200).json({
-      success: true,
-      data: userDto(data),
-    });
+    res.status(200).json(
+      toResponse(authMeResponseSchema, {
+        success: true,
+        data: serializeUser(data),
+      })
+    );
   };
 
   public session = async (
@@ -98,10 +113,12 @@ export class AuthController {
     const auth = requireAuth(req);
     const data = await this.authService.getSession(auth.sub, auth.sid);
 
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.status(200).json(
+      toResponse(authSessionResponseSchema, {
+        success: true,
+        data: serializeSession(data),
+      })
+    );
   };
 
   public sessions = async (
@@ -111,10 +128,12 @@ export class AuthController {
     const auth = requireAuth(req);
     const data = await this.authService.getActiveSessions(auth.sub, auth.sid);
 
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.status(200).json(
+      toResponse(authSessionsResponseSchema, {
+        success: true,
+        data: data.map(serializeSession),
+      })
+    );
   };
 
   public signout = async (
@@ -126,9 +145,7 @@ export class AuthController {
 
     this.clearCookie(res);
 
-    res.status(200).json({
-      success: true,
-    });
+    res.status(200).json(toResponse(authSuccessSchema, { success: true }));
   };
 
   public signoutAll = async (
@@ -140,9 +157,7 @@ export class AuthController {
 
     this.clearCookie(res);
 
-    res.status(200).json({
-      success: true,
-    });
+    res.status(200).json(toResponse(authSuccessSchema, { success: true }));
   };
 
   public revokeSession = async (
@@ -165,10 +180,12 @@ export class AuthController {
       targetSessionId as unknown as SessionEntity['id']
     );
 
-    res.status(200).json({
-      success: true,
-      message: 'Sesi berhasil dicabut',
-    });
+    res.status(200).json(
+      toResponse(authMessageResponseSchema, {
+        success: true,
+        message: 'Sesi berhasil dicabut',
+      })
+    );
   };
 
   public changePassword = async (
@@ -188,19 +205,19 @@ export class AuthController {
         : {}),
     });
 
-    res.status(200).json({
-      success: true,
-      message: 'Password berhasil diperbarui',
-    });
+    res.status(200).json(
+      toResponse(authMessageResponseSchema, {
+        success: true,
+        message: 'Password berhasil diperbarui',
+      })
+    );
   };
 
   public verifyEmail = async (req: Request, res: Response): Promise<void> => {
     const { email, code } = verifyEmailSchema.parse(req.body);
     await this.authService.verifyEmail(email, code);
 
-    res.status(200).json({
-      success: true,
-    });
+    res.status(200).json(toResponse(authSuccessSchema, { success: true }));
   };
 
   public resendEmailVerification = async (
@@ -210,9 +227,7 @@ export class AuthController {
     const { email } = resendEmailVerificationSchema.parse(req.body);
     await this.authService.resendEmailVerification(email);
 
-    res.status(202).json({
-      success: true,
-    });
+    res.status(202).json(toResponse(authSuccessSchema, { success: true }));
   };
 
   private extractMetadata(req: Request): ClientMetadata {

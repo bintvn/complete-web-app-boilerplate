@@ -1,4 +1,6 @@
 import UserController from './user.controller.js';
+import type { OpenapiModule } from '../openapi/index.js';
+import { userRoutePath, registerUserOpenApi } from './user.openapi.js';
 import UserService from './user.service.js';
 import { UserEntity } from './entities/user.entity.js';
 import type RoleService from '../role/role.service.js';
@@ -21,6 +23,7 @@ export interface UserModule extends Module {
 const createUserModule = (
   dataSource: DataSource,
   dependencies: UserServiceDependencies,
+  openapiModule: OpenapiModule,
   authMiddleware: AuthMiddleware
 ): UserModule => {
   const service = new UserService(
@@ -30,13 +33,15 @@ const createUserModule = (
   const controller = new UserController(service);
   const router = createUserRouter(controller, authMiddleware);
 
+  registerUserOpenApi(openapiModule.service);
+
   return {
     name: 'user',
     entities: [UserEntity],
     service,
     controller,
     router,
-    routePath: 'users',
+    routePath: userRoutePath,
   };
 };
 

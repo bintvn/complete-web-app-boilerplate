@@ -13,14 +13,27 @@ const createRouter = (
 
   router.use('/', indexRoutes);
 
-  for (const module of Object.values(coreContainer) as Module[]) {
+  const mountedPaths = new Set<string>();
+  const mountedNames = new Set<string>();
+  for (const module of Object.values(coreContainer)) {
     if (module.routePath && module.router) {
+      mountedPaths.add(module.routePath.toLowerCase());
+      mountedNames.add(module.name);
       router.use(`/${module.routePath}`, module.router);
     }
   }
 
-  for (const module of Object.values(appContainer) as Module[]) {
+  const appModules: Module[] = Object.values(appContainer);
+  for (const module of appModules) {
     if (module.routePath && module.router) {
+      const routePath = module.routePath.toLowerCase();
+      if (mountedPaths.has(routePath) || mountedNames.has(module.name)) {
+        throw new Error(
+          `Duplicate API module or route: ${module.name} (/${routePath})`
+        );
+      }
+      mountedPaths.add(routePath);
+      mountedNames.add(module.name);
       router.use(`/${module.routePath}`, module.router);
     }
   }

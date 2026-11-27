@@ -4,7 +4,7 @@ import {
   updateRoleSchema,
   type CreateRole,
   type UpdateRole,
-} from './role.schema.js';
+} from '@complete-web-app-boilerplate/shared/core/modules/role';
 import { BaseService } from '../../../core/base.service.js';
 import type { RoleEntity } from './entities/role.entity.js';
 import type { RoleUserEntity } from './entities/role-user.entity.js';

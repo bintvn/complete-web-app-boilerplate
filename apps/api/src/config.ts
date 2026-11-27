@@ -2,6 +2,7 @@ import { appConfig } from './core/app-config.js';
 
 export default appConfig((config) => {
   return {
+    appName: process.env.APP_NAME,
     server: {
       host: process.env.HOST,
       port: process.env.PORT ? parseInt(process.env.PORT, 10) : undefined,
