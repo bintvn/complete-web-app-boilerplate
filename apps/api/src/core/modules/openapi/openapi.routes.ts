@@ -1,32 +1,12 @@
 import express from 'express';
 import { Router } from 'express';
 import { Scalar } from '@scalar/express-api-reference';
-import {
-  openApiDocumentSchema,
-  type OpenApiDocument,
-} from '@complete-web-app-boilerplate/shared/core/modules/openapi';
-import { toResponse } from '../../response-serializer.js';
-import type OpenapiService from './openapi.service.js';
 import type { AppConfig } from '../../types/app.types.js';
 import path from 'node:path';
 
-export default function createOpenapiRouter(
-  appConfig: AppConfig,
-  openapiService: OpenapiService
-) {
+export default function createOpenapiRouter(appConfig: AppConfig) {
   const router = Router();
-  let document: OpenApiDocument | undefined;
 
-  router.get('/openapi.json', (_req, res) => {
-    if (!document) {
-      document = toResponse(
-        openApiDocumentSchema,
-        openapiService.generateDocument()
-      );
-    }
-
-    res.json(document);
-  });
   router.use(
     '/assets',
     express.static(
@@ -52,7 +32,7 @@ export default function createOpenapiRouter(
         title: appConfig.appName,
         description: `${appConfig.appName} API Reference and Documentation`,
       },
-      url: '/docs/openapi.json',
+      url: '/openapi.json',
       cdn: '/docs/assets/standalone.js',
       showDeveloperTools: 'localhost',
       withDefaultFonts: false,

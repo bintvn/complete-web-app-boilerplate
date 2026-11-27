@@ -3,10 +3,7 @@ import createOpenapiRouter from './openapi.routes.js';
 import OpenapiService from './openapi.service.js';
 import packageJson from '../../../../package.json' with { type: 'json' };
 import type { AppConfig } from '../../types/app.types.js';
-import {
-  openApiRoutePath,
-  registerOpenApiDocument,
-} from './openapi.openapi.js';
+import { registerOpenApiDocument } from './openapi.openapi.js';
 
 export interface OpenapiModule extends Module {
   service: OpenapiService;
@@ -18,7 +15,7 @@ const createOpenapiModule = (appConfig: AppConfig): OpenapiModule => {
     info: { title: appConfig.appName, version: packageJson.version },
     servers: [{ url: '/' }],
   });
-  const router = createOpenapiRouter(appConfig, service);
+  const router = createOpenapiRouter(appConfig);
   registerOpenApiDocument(service);
 
   return {
@@ -26,7 +23,7 @@ const createOpenapiModule = (appConfig: AppConfig): OpenapiModule => {
     entities: [],
     service,
     router,
-    routePath: openApiRoutePath,
+    routePath: 'docs',
   };
 };
 

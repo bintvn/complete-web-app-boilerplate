@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import indexRoutes from './routes/index.route.js';
 import { type CoreContainer } from './bootstrap.js';
 import notFoundRoute from './routes/not-found.route.js';
 import type { AppContainer } from '../bootstrap.js';
@@ -10,8 +9,6 @@ const createRouter = (
   appContainer: AppContainer
 ) => {
   const router = Router();
-
-  router.use('/', indexRoutes);
 
   const mountedPaths = new Set<string>();
   const mountedNames = new Set<string>();
