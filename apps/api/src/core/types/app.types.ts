@@ -22,6 +22,11 @@ export interface AppConfig {
   cookie: {
     /**
      * @type {string}
+     * @default auth_token
+     */
+    name: string;
+    /**
+     * @type {string}
      * @default secret
      */
     secret: string;

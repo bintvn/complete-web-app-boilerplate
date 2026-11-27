@@ -11,6 +11,7 @@ const defaultConfig: AppConfig = {
     port: 3000,
   },
   cookie: {
+    name: 'auth_token',
     secret: 'secret',
     expiresInSeconds: 604800,
   },

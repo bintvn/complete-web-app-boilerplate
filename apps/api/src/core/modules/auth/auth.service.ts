@@ -43,7 +43,7 @@ export class AuthService extends CoreBaseService {
 
   constructor(
     protected readonly dependencies: AuthModuleDependencies,
-    protected readonly config: AppConfig
+    public readonly config: AppConfig
   ) {
     super();
 

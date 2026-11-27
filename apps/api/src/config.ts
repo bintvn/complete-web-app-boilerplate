@@ -8,6 +8,7 @@ export default appConfig((config) => {
       port: process.env.PORT ? parseInt(process.env.PORT, 10) : undefined,
     },
     cookie: {
+      name: process.env.COOKIE_AUTH_NAME,
       secret: process.env.COOKIE_SECRET || config.cookie.secret,
       expiresInSeconds: process.env.COOKIE_EXPIRES_IN_SECOND
         ? parseInt(process.env.COOKIE_EXPIRES_IN_SECOND, 10)

@@ -70,7 +70,7 @@ export class AuthController {
   public refresh = async (req: Request, res: Response): Promise<void> => {
     const parsed = !req.body ? undefined : refreshSchema.parse(req.body);
     const cookies = req.signedCookies as Record<string, unknown> | undefined;
-    const cookieToken = cookies?.['token'];
+    const cookieToken = cookies?.[this.authService.config.cookie.name];
     const refreshToken =
       parsed?.refreshToken ||
       (typeof cookieToken === 'string' ? cookieToken : null);
@@ -244,7 +244,7 @@ export class AuthController {
 
   private setCookie(res: Response, token: string): void {
     if (this.config.cookie.expiresInSeconds && this.config.cookie.secret)
-      res.cookie('token', token, {
+      res.cookie(this.authService.config.cookie.name, token, {
         signed: true,
         httpOnly: true,
         secure: !IS_DEV,
@@ -255,7 +255,7 @@ export class AuthController {
 
   private clearCookie(res: Response): void {
     if (this.config.cookie.expiresInSeconds && this.config.cookie.secret)
-      res.clearCookie('token', {
+      res.clearCookie(this.authService.config.cookie.name, {
         signed: true,
         httpOnly: true,
         secure: !IS_DEV,
