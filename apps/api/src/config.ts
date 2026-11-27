@@ -46,5 +46,10 @@ export default appConfig((config) => {
       username: process.env.SMTP_LOGIN_EMAIL,
       password: process.env.SMTP_LOGIN_PASSWORD,
     },
+    cors: {
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      origin: process.env.ALLOWED_ORIGINS?.split(',') ?? [],
+    },
   };
 });
