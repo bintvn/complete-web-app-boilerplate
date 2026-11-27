@@ -27,4 +27,3 @@ export function InputOTPWithSeparator(props: InputOTPWithSeparatorProps) {
     </InputOTP>
   );
 }
-

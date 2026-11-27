@@ -85,7 +85,9 @@ export default function EmailVerificationPage() {
               {notice}
             </p>
           )}
-          <Label htmlFor="verify-code" className="sr-only">OTP Code</Label>
+          <Label htmlFor="verify-code" className="sr-only">
+            OTP Code
+          </Label>
           <InputOTPWithSeparator
             id="verify-code"
             containerClassName="justify-center"
