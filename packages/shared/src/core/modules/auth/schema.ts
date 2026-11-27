@@ -1,15 +1,17 @@
 import { z } from "zod";
 import { userResponseSchema } from "../user/schema.js";
 
+const password = z.string().min(8).max(128);
+
 export const registerSchema = z.object({
   name: z.string().min(2).max(255),
   email: z.email().max(255),
-  password: z.string().min(8).max(128),
+  password,
 });
 
 export const signInSchema = z.object({
   email: z.email(),
-  password: z.string().min(1),
+  password,
 });
 
 export const resendEmailVerificationSchema = z.object({
@@ -28,16 +30,14 @@ export const refreshSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-  oldPassword: z.string().min(1),
-  newPassword: z.string().min(8).max(128),
+  oldPassword: password,
+  newPassword: password,
   revokeOtherSessions: z.boolean().optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type SignInInput = z.infer<typeof signInSchema>;
-export type ResendEmailVerificationInput = z.infer<
-  typeof resendEmailVerificationSchema
->;
+export type ResendEmailVerificationInput = z.infer<typeof resendEmailVerificationSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type RefreshInput = z.infer<typeof refreshSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
