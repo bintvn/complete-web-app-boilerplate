@@ -1,6 +1,16 @@
 import { createContext, type Dispatch, type SetStateAction } from "react";
-import type { SignInParams, SignInResponse, SignOutResponse, SignUpParams, SignUpResponse } from "@/types/auth";
-import type { AuthMeResponse, AuthRefreshResponse, AuthSignInResponse } from "@complete-web-app-boilerplate/sdk";
+import type {
+  SignInParams,
+  SignInResponse,
+  SignOutResponse,
+  SignUpParams,
+  SignUpResponse,
+} from "@/types/auth";
+import type {
+  AuthMeResponse,
+  AuthRefreshResponse,
+  AuthSignInResponse,
+} from "@complete-web-app-boilerplate/sdk";
 
 type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
 
