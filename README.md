@@ -18,6 +18,12 @@ A starter project for building full-stack web applications. It brings a public-f
 - **Language and validation** — TypeScript and Zod
 - **Workspace tooling** — pnpm and Turborepo
 
+## API documentation
+
+Start the development API from the workspace root with `pnpm dev:api`. With the `HOST` and `PORT` values in `apps/api/.env.example`, the Scalar API reference is available at [http://127.0.0.1:3000/docs](http://127.0.0.1:3000/docs), and the OpenAPI JSON is available at [http://127.0.0.1:3000/docs/openapi.json](http://127.0.0.1:3000/docs/openapi.json) or [http://127.0.0.1:3000/openapi.json](http://127.0.0.1:3000/openapi.json).
+
+Protected operations require a Bearer access token. Scalar loads its interface assets from jsDelivr.
+
 ## Email verification API
 
 Set `OTP_SECRET` to a dedicated random secret of at least 32 bytes in the API environment. For example, generate one locally with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, and `SMTP_FROM_EMAIL`. Set `SMTP_LOGIN_EMAIL` and `SMTP_LOGIN_PASSWORD` together if the SMTP server requires authentication. Development startup uses the existing TypeORM schema synchronization to create the verification table.

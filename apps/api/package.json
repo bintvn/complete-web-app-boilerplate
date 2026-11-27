@@ -31,6 +31,7 @@
     "@complete-web-app-boilerplate/email-template": "workspace:*",
     "@complete-web-app-boilerplate/shared": "workspace:*",
     "@node-rs/argon2": "^2.2.2",
+    "@scalar/api-reference": "^1.84.0",
     "@scalar/express-api-reference": "^0.10.42",
     "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",

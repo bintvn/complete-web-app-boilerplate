@@ -1,8 +1,6 @@
-import { randomBytes } from 'node:crypto';
+import express from 'express';
 import { Router } from 'express';
-import helmet from 'helmet';
 import { Scalar } from '@scalar/express-api-reference';
-import type { RequestHandler } from 'express';
 import {
   openApiDocumentSchema,
   type OpenApiDocument,
@@ -10,6 +8,7 @@ import {
 import { toResponse } from '../../response-serializer.js';
 import type OpenapiService from './openapi.service.js';
 import type { AppConfig } from '../../types/app.types.js';
+import path from 'node:path';
 
 export default function createOpenapiRouter(
   appConfig: AppConfig,
@@ -28,15 +27,25 @@ export default function createOpenapiRouter(
 
     res.json(document);
   });
-  router.get('/', (req, res, next) => {
-    const nonce = randomBytes(16).toString('base64');
-    const policy = helmet.contentSecurityPolicy({
-      directives: {
-        scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', `'nonce-${nonce}'`],
-        styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
-      },
-    });
-    const scalar = Scalar({
+  router.use(
+    '/assets',
+    express.static(
+      path.join(
+        process.cwd(),
+        'node_modules/@scalar/api-reference/dist/browser'
+      )
+    )
+  );
+  router.use((_req, res, next) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';"
+    );
+    next();
+  });
+  router.use(
+    '/',
+    Scalar({
       title: appConfig.appName,
       pageTitle: appConfig.appName,
       metaData: {
@@ -44,17 +53,11 @@ export default function createOpenapiRouter(
         description: `${appConfig.appName} API Reference and Documentation`,
       },
       url: '/docs/openapi.json',
-      nonce,
+      cdn: '/docs/assets/standalone.js',
       showDeveloperTools: 'localhost',
-    }) as RequestHandler;
-    policy(req, res, (error) => {
-      if (error) {
-        next(error);
-        return;
-      }
-      scalar(req, res, next);
-    });
-  });
+      withDefaultFonts: false,
+    })
+  );
 
   return router;
 }
