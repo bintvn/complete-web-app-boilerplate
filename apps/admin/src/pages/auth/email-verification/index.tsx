@@ -1,89 +1,122 @@
-import { Link, useSearchParams } from "react-router";
-import { useEffect, useRef, useState } from "react";
-import { Logo } from "@/components/logo";
+import { useState, type FormEvent } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@complete-web-app-boilerplate/ui/components/button";
+import { Input } from "@complete-web-app-boilerplate/ui/components/input";
+import { Label } from "@complete-web-app-boilerplate/ui/components/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@complete-web-app-boilerplate/ui/components/card";
-import { Button } from "@complete-web-app-boilerplate/ui/components/button";
-import { authVerifyEmail } from "@complete-web-app-boilerplate/sdk";
 
 export default function EmailVerificationPage() {
-  const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
+  const [params] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { verifyEmail, resendVerification } = useAuth();
+  const [email, setEmail] = useState(params.get("email") ?? "");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(
+    location.state?.error ?? null,
   );
-  const [message, setMessage] = useState("Memverifikasi email...");
-  const verifiedTokenRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setStatus("error");
-      setMessage("Token verifikasi tidak ditemukan.");
-      return;
-    }
-
-    if (verifiedTokenRef.current === token) return;
-
-    authVerifyEmail({
-      body: {},
-    });
-
-    verifiedTokenRef.current = token;
-    apiRequest.auth
-      .verifyEmail(token)
-      .then((response) => {
-        setStatus("success");
-        setMessage(response.message || "Email berhasil diverifikasi.");
-      })
-      .catch((err) => {
-        setStatus("error");
-        setMessage(
-          err instanceof Error ? err.message : "Verifikasi email gagal.",
-        );
+  const [notice, setNotice] = useState<string | null>(
+    location.state?.notice ?? null,
+  );
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await verifyEmail(email.trim(), code);
+      navigate("/auth/sign-in", {
+        replace: true,
+        state: { notice: "Email berhasil diverifikasi. Silakan masuk." },
       });
-  }, [searchParams]);
-
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Verifikasi gagal.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function resend() {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await resendVerification(email.trim());
+      setNotice(
+        "Jika email terdaftar dan belum diverifikasi, kode telah dikirim.",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengirim kode.");
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
-    <div className="flex w-full max-w-sm flex-col gap-6">
-      <Link to="/" className="flex items-center gap-2 self-center font-medium">
-        <div className="bg-primary text-primary-foreground flex size-9 items-center justify-center rounded-md">
-          <Logo size={22} />
-        </div>
-        Living Kost Pro
-      </Link>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Verifikasi email</CardTitle>
-          {status === "loading" && (
-            <CardDescription>
-              Kami sedang memeriksa tautan verifikasi Anda.
-            </CardDescription>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>Verifikasi email</CardTitle>
+        <CardDescription>
+          Masukkan kode enam digit yang dikirim ke email Anda.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="grid gap-4" onSubmit={submit}>
+          {error && (
+            <p role="alert" className="text-destructive text-sm">
+              {error}
+            </p>
           )}
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div
-            className={
-              status === "error"
-                ? "border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm"
-                : status === "success"
-                  ? "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
-                  : "bg-muted text-muted-foreground rounded-md border px-3 py-2 text-sm"
+          {notice && (
+            <p role="status" className="text-sm">
+              {notice}
+            </p>
+          )}
+          <Label htmlFor="verify-email">Email</Label>
+          <Input
+            id="verify-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={busy}
+          />
+          <Label htmlFor="verify-code">Kode OTP</Label>
+          <Input
+            id="verify-code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={code}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
             }
-          >
-            {message}
-          </div>
-          <Button>
-            <Link to="/auth/sign-in">Masuk ke dashboard</Link>
+            required
+            disabled={busy}
+          />
+          <Button type="submit" disabled={busy}>
+            Verifikasi
           </Button>
-        </CardContent>
-      </Card>
-    </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy || !email}
+            onClick={resend}
+          >
+            Kirim ulang kode
+          </Button>
+          <Link className="text-sm underline" to="/auth/sign-in">
+            Kembali ke login
+          </Link>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

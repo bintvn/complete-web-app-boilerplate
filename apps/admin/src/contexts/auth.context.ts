@@ -1,27 +1,21 @@
-import { createContext, type Dispatch, type SetStateAction } from "react";
-import type {
-  SignInParams,
-  SignOutResponse,
-  SignUpParams,
-  SignUpResponse,
-} from "@/types/auth";
+import { createContext } from "react";
 import type {
   AuthMeResponse,
-  AuthRefreshResponse,
+  AuthSessionResponse,
   AuthSignInResponse,
+  AuthSignUpData,
 } from "@complete-web-app-boilerplate/sdk";
 
-type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
-
 export type AuthContextValue = {
-  token: TokenResponse | null;
   user: AuthMeResponse["data"] | null;
-  loading: boolean;
-  setLoading: Dispatch<SetStateAction<boolean>>;
-  signIn: (input: SignInParams) => Promise<AuthSignInResponse>;
-  me: () => Promise<AuthMeResponse["data"]>;
-  signUp: (input: SignUpParams) => Promise<SignUpResponse>;
-  signOut: () => Promise<SignOutResponse>;
+  session: AuthSessionResponse["data"] | null;
+  signIn: (input: {
+    email: string;
+    password: string;
+  }) => Promise<AuthSignInResponse>;
+  signUp: (input: NonNullable<AuthSignUpData["body"]>) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
+  signOut: () => Promise<{ success: true }>;
 };
-
 export const AuthContext = createContext<AuthContextValue | null>(null);

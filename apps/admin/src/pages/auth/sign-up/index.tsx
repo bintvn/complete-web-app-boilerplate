@@ -1,7 +1,6 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { type FormEvent, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import type { SignUpParams } from "@/types/auth";
 import {
   Card,
   CardContent,
@@ -13,13 +12,13 @@ import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { AuthVideo } from "@/components/auth-video";
 
 export default function SignUpPage() {
-  const { signUp } = useAuth();
+  const { signUp, resendVerification } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,15 +26,24 @@ export default function SignUpPage() {
     setError(null);
 
     try {
-      const signUpData: SignUpParams = {
-        name,
-        email,
-        password,
-        callbackUrl: `${window.location.origin}/auth/email-verification`,
-      };
-      await signUp(signUpData);
-
-      setSuccess(true);
+      await signUp({ name, email, password });
+      let error: string | null = null;
+      try {
+        await resendVerification(email);
+      } catch (err) {
+        error = err instanceof Error ? err.message : "Gagal mengirim kode.";
+      }
+      navigate(`/auth/email-verification?email=${encodeURIComponent(email)}`, {
+        replace: true,
+        state: error
+          ? {
+              error: `Akun berhasil dibuat. ${error} Silakan kirim ulang kode.`,
+            }
+          : {
+              notice:
+                "Akun berhasil dibuat. Periksa email Anda untuk kode OTP.",
+            },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal membuat akun");
     } finally {
@@ -66,81 +74,66 @@ export default function SignUpPage() {
                     Create your new account.
                   </p>
                 </div>
-                {success ? (
-                  <div className="grid gap-4">
-                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
-                      Akun dibuat. Cek inbox email Anda untuk membuka tautan
-                      verifikasi.
+                <form className="grid gap-6" onSubmit={handleSubmit}>
+                  {error && (
+                    <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+                      {error}
                     </div>
-                    {/* <Button variant="outline" onClick={() => setSuccess(false)}>
-                                            Pakai email lain
-                                        </Button> */}
-                    <Button>
-                      <Link to="/auth/sign-in">Kembali ke login</Link>
+                  )}
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        autoComplete="name"
+                        placeholder="Full name"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        autoComplete="email"
+                        placeholder="Your email address"
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        placeholder="Your new password"
+                        onChange={(event) => setPassword(event.target.value)}
+                        autoComplete="new-password"
+                        required
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full cursor-pointer"
+                      disabled={submitting}
+                    >
+                      {submitting ? "Creating account..." : "Create Account"}
                     </Button>
                   </div>
-                ) : (
-                  <form className="grid gap-6" onSubmit={handleSubmit}>
-                    {error && (
-                      <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
-                        {error}
-                      </div>
-                    )}
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                          id="name"
-                          value={name}
-                          onChange={(event) => setName(event.target.value)}
-                          autoComplete="name"
-                          placeholder="Full name"
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(event) => setEmail(event.target.value)}
-                          autoComplete="email"
-                          placeholder="Your email address"
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          value={password}
-                          placeholder="Your new password"
-                          onChange={(event) => setPassword(event.target.value)}
-                          autoComplete="new-password"
-                          required
-                        />
-                      </div>
-                      <Button
-                        type="submit"
-                        className="w-full cursor-pointer"
-                        disabled={submitting}
-                      >
-                        {submitting ? "Creating account..." : "Create Account"}
-                      </Button>
-                    </div>
-                    <div className="text-center text-sm">
-                      Have an account?{" "}
-                      <Link
-                        to="/auth/sign-in"
-                        className="underline underline-offset-4"
-                      >
-                        Sign In
-                      </Link>
-                    </div>
-                  </form>
-                )}
+                  <div className="text-center text-sm">
+                    Have an account?{" "}
+                    <Link
+                      to="/auth/sign-in"
+                      className="underline underline-offset-4"
+                    >
+                      Sign In
+                    </Link>
+                  </div>
+                </form>
               </div>
             </div>
             <AuthVideo videoUrl="/assets/videos/bg-video.mp4" />

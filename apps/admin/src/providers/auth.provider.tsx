@@ -1,162 +1,173 @@
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { AuthContext, type AuthContextValue } from "../contexts/auth.context";
 import { FullscreenLoader } from "@/components/fullscreen-loader";
-
+import { AuthApiError } from "@/lib/auth-error";
 import { client } from "@complete-web-app-boilerplate/sdk/client.gen";
 import {
-  authSignIn,
   authMe,
   authRefresh,
-  type AuthSignInResponse,
-  type AuthRefreshResponse,
+  authResendVerification,
+  authSession,
+  authSignIn,
+  authSignOut,
+  authSignUp,
+  authVerifyEmail,
   type AuthMeResponse,
+  type AuthSessionResponse,
 } from "@complete-web-app-boilerplate/sdk";
 
 client.setConfig({
   baseUrl: import.meta.env.VITE_API_URL,
   credentials: "include",
 });
-
-type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
-
-let inMemoryToken: TokenResponse | null = null;
-let isRefreshing = false;
+let accessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
+const requestCopies = new WeakMap<Request, Request>();
+let onExpired: (() => void) | null = null;
 
-type AuthProviderProps = {
-  children: ReactNode;
-};
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<TokenResponse | null>(() => inMemoryToken);
-  const [user, setUser] = useState<AuthMeResponse["data"] | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const saveToken = useCallback((nextToken: TokenResponse | null) => {
-    inMemoryToken = nextToken;
-    setToken(nextToken);
-  }, []);
-
-  useEffect(() => {
-    const reqInterceptor = client.interceptors.request.use((request) => {
-      if (inMemoryToken?.accessToken) {
-        request.headers.set(
-          "Authorization",
-          `Bearer ${inMemoryToken.accessToken}`,
-        );
+function check<T>(result: { data?: T; error?: unknown }): T {
+  if (result.error || !result.data) throw new AuthApiError(result.error);
+  return result.data;
+}
+async function refresh(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      try {
+        const result = await authRefresh();
+        if (result.error || !result.data) {
+          accessToken = null;
+          onExpired?.();
+          return null;
+        }
+        accessToken = result.data.data.accessToken;
+        return accessToken;
+      } finally {
+        refreshPromise = null;
       }
-      return request;
-    });
+    })();
+  }
+  return refreshPromise;
+}
+client.interceptors.request.use((request) => {
+  if (accessToken)
+    request.headers.set("Authorization", `Bearer ${accessToken}`);
+  requestCopies.set(request, request.clone());
+  return request;
+});
+client.interceptors.response.use(async (response, request) => {
+  const path = new URL(request.url).pathname;
+  const publicAuth = [
+    "/auth/refresh",
+    "/auth/sign-in",
+    "/auth/sign-up",
+    "/auth/verify/email",
+    "/auth/verify/email/resend",
+  ].includes(path);
+  if (response.status !== 401 || publicAuth) return response;
+  const previousToken = request.headers
+    .get("Authorization")
+    ?.replace(/^Bearer /, "");
+  const nextToken =
+    accessToken && previousToken !== accessToken
+      ? accessToken
+      : await refresh();
+  if (!nextToken) return response;
+  const retry = requestCopies.get(request);
+  if (!retry) return response;
+  retry.headers.set("Authorization", `Bearer ${nextToken}`);
+  const retriedResponse = await fetch(retry);
+  if (retriedResponse.status === 401) {
+    accessToken = null;
+    onExpired?.();
+  }
+  return retriedResponse;
+});
 
-    const resInterceptor = client.interceptors.response.use(
-      async (response, request) => {
-        const isAuthEndpoint =
-          request.url.includes("/auth/refresh") ||
-          request.url.includes("/auth/sign-in") ||
-          request.url.includes("/auth/sign-up");
-
-        if (response.status !== 401 || isAuthEndpoint) {
-          return response;
-        }
-
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshPromise = (async () => {
-            try {
-              const { data: result, error } = await authRefresh();
-
-              if (error || !result?.data) {
-                saveToken(null);
-                setUser(null);
-                return null;
-              }
-
-              saveToken(result.data);
-              return result.data.accessToken;
-            } finally {
-              isRefreshing = false;
-            }
-          })();
-        }
-
-        const newAccessToken = await refreshPromise;
-        if (!newAccessToken) return response;
-
-        const retryRequest = new Request(request, {
-          headers: new Headers(request.headers),
-        });
-        retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
-        return fetch(retryRequest);
-      },
-    );
-
-    return () => {
-      client.interceptors.request.eject(reqInterceptor);
-      client.interceptors.response.eject(resInterceptor);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthMeResponse["data"] | null>(null);
+  const [session, setSession] = useState<AuthSessionResponse["data"] | null>(
+    null,
+  );
+  const [initializing, setInitializing] = useState(true);
+  useEffect(() => {
+    let active = true;
+    onExpired = () => {
+      if (active) {
+        setUser(null);
+        setSession(null);
+      }
     };
-  }, [saveToken]);
-
-  const value: AuthContextValue = {
-    token,
-    user,
-    loading,
-    setLoading,
-    async signIn(input) {
-      const { data: result, error } = await authSignIn({
-        body: input,
-      });
-
-      if (error) {
-        if (
-          "code" in error &&
-          error.code === "VALIDATION_ERROR" &&
-          "errors" in error
-        ) {
-          throw new Error(error.errors.join(", "));
-        } else if (
-          "code" in error &&
-          error.code !== "VALIDATION_ERROR" &&
-          "message" in error
-        ) {
-          throw new Error(error.message);
+    async function restore() {
+      try {
+        if (await refresh()) {
+          const [me, currentSession] = await Promise.all([
+            authMe(),
+            authSession(),
+          ]);
+          const nextUser = check(me).data;
+          const nextSession = check(currentSession).data;
+          if (active) {
+            setUser(nextUser);
+            setSession(nextSession);
+          }
         }
-
+      } catch {
+        accessToken = null;
+      } finally {
+        if (active) setInitializing(false);
+      }
+    }
+    void restore();
+    return () => {
+      active = false;
+      onExpired = null;
+    };
+  }, []);
+  const value: AuthContextValue = {
+    user,
+    session,
+    async signIn(input) {
+      const result = check(await authSignIn({ body: input }));
+      accessToken = result.data.accessToken;
+      try {
+        const [me, currentSession] = await Promise.all([
+          authMe(),
+          authSession(),
+        ]);
+        const nextUser = check(me).data;
+        const nextSession = check(currentSession).data;
+        setUser(nextUser);
+        setSession(nextSession);
+      } catch (error) {
+        accessToken = null;
         throw error;
       }
-
-      saveToken(result.data);
-      setUser(await value.me());
-
       return result;
     },
-    async me() {
-      const { data: result, error } = await authMe();
-
-      if (error) throw new Error(error.message);
-
-      return result.data;
-    },
     async signUp(input) {
-      console.log(input);
-
-      return {
-        success: true,
-      };
+      check(await authSignUp({ body: input }));
+    },
+    async resendVerification(email) {
+      check(await authResendVerification({ body: { email } }));
+    },
+    async verifyEmail(email, code) {
+      check(await authVerifyEmail({ body: { email, code } }));
     },
     async signOut() {
-      saveToken(null);
+      const result = check(await authSignOut());
+      accessToken = null;
       setUser(null);
-
-      return {
-        success: true,
-      };
+      setSession(null);
+      return result;
     },
   };
-
   return (
     <AuthContext.Provider value={value}>
-      {loading && <FullscreenLoader message="Please wait..." />}
-      {children}
+      {initializing ? (
+        <FullscreenLoader message="Memulihkan sesi..." />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

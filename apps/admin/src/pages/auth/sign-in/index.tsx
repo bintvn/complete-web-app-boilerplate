@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { type FormEvent, useState } from "react";
 import Message from "./components/message";
 import { useAuth } from "@/hooks/use-auth";
+import { AuthApiError } from "@/lib/auth-error";
 import { AuthVideo } from "@/components/auth-video";
 import { Logo } from "@/components/logo";
 import {
@@ -13,7 +14,7 @@ import { Input } from "@complete-web-app-boilerplate/ui/components/input";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
 
 export default function SignInPage() {
-  const { signIn } = useAuth();
+  const { signIn, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -22,7 +23,9 @@ export default function SignInPage() {
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(
+    location.state?.notice ?? null,
+  );
   const [needsVerification, setNeedsVerification] = useState(false);
 
   const reason = searchParams.get("reason");
@@ -55,6 +58,12 @@ export default function SignInPage() {
     } catch (error) {
       setNotice(null);
 
+      if (
+        error instanceof AuthApiError &&
+        error.code === "EMAIL_NOT_VERIFIED"
+      ) {
+        setNeedsVerification(true);
+      }
       if (error instanceof Error) {
         setError(error.message);
 
@@ -79,10 +88,13 @@ export default function SignInPage() {
     setError(null);
 
     try {
-      // await resendVerification(email);
-      setNotice(
-        "Jika email terdaftar dan belum diverifikasi, tautan baru sudah dikirim.",
-      );
+      await resendVerification(email);
+      navigate(`/auth/email-verification?email=${encodeURIComponent(email)}`, {
+        state: {
+          notice:
+            "Jika email terdaftar dan belum diverifikasi, kode telah dikirim.",
+        },
+      });
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -176,6 +188,14 @@ export default function SignInPage() {
                 >
                   {resending ? "Mengirim..." : "Kirim ulang email verifikasi"}
                 </Button>
+              )}
+              {needsVerification && (
+                <Link
+                  className="text-center text-sm underline"
+                  to={`/auth/email-verification?email=${encodeURIComponent(email)}`}
+                >
+                  Masukkan kode OTP
+                </Link>
               )}
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}

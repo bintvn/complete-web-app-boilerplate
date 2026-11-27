@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DeleteAccountCard,
   EmailCard,
@@ -14,13 +14,13 @@ import PageHeader from "../../../components/page-header";
 import type { UserDTO } from "@/types/dtos";
 
 export default function AccountSettings() {
-  const [user, setUser] = useState<UserDTO | null>(null);
+  const { user: authenticatedUser } = useAuth();
+  const [user, setUser] = useState<UserDTO | null>(authenticatedUser);
 
   useEffect(() => {
-    apiRequest.account.me().then((res) => {
-      setUser(res.data);
-    });
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUser(authenticatedUser);
+  }, [authenticatedUser]);
 
   if (!user) {
     return null;

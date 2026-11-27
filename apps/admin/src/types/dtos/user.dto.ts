@@ -1,9 +1,2 @@
-export type UserDTO = {
-  id: string;
-  createdAt: string;
-  updatedAt: string | null;
-  isDisabled: boolean;
-  isEmailVerified: boolean;
-  name: string;
-  email: string;
-};
+import type { AuthMeResponse } from "@complete-web-app-boilerplate/sdk";
+export type UserDTO = AuthMeResponse["data"];

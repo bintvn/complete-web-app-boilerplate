@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
         }
 
         setStatus("invalid");
-        setMessage("Link reset password tidak valid.");
+        setMessage(normalizedError.message || "Link reset password tidak valid.");
       }
     }
 

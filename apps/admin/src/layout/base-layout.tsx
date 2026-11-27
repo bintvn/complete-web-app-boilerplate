@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
+import { useState } from "react";
 import { cn } from "../lib/utils";
 import type { UserMenuItem } from "../components/nav-user";
 import { useSidebarConfig } from "@/contexts/sidebar.context";
@@ -40,6 +41,7 @@ export function BaseLayout({
   userMenu: UserMenuItem[];
   propertySelector?: () => React.ReactNode;
 }) {
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const { config } = useSidebarConfig();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,8 +69,17 @@ export function BaseLayout({
         pathname={location.pathname}
         user={user}
         onSignOut={async () => {
-          await onSignOut();
-          navigate("/auth/sign-in", { replace: true });
+          try {
+            setSignOutError(null);
+            await onSignOut();
+            navigate("/auth/sign-in", { replace: true });
+          } catch (error) {
+            setSignOutError(
+              error instanceof Error
+                ? error.message
+                : "Gagal keluar. Silakan coba lagi.",
+            );
+          }
         }}
         renderBrandLink={() => (
           <Link to="/">
@@ -118,6 +129,11 @@ export function BaseLayout({
             />
           }
         />
+        {signOutError && (
+          <p role="alert" className="mt-16 px-4 text-destructive">
+            {signOutError}
+          </p>
+        )}
         <MainContent>{children}</MainContent>
         <SiteFooter
           className={cn(

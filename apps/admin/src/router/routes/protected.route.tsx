@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { BaseLayout } from "@/layout";
 import { type RouteObject, Navigate, Outlet, useLocation } from "react-router";
-import { apiRequest } from "../../lib/api";
 import { lazy } from "react";
 import { sidebarMenu, userMenu } from "../../sidebarMenu";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,7 +30,9 @@ function ProtectedRoute() {
         subtitle: "Dashboard",
       }}
       user={user}
-      onSearch={(query) => apiRequest.search(query)}
+      onSearch={async () => {
+        throw new Error("Pencarian belum tersedia.");
+      }}
       onSignOut={signOut}
       sidebarMenu={sidebarMenu}
       userMenu={userMenu}
