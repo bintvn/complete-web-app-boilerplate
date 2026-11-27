@@ -2,9 +2,15 @@ import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@complete-web-app-boilerplate/ui/components/button";
-import { Input } from "@complete-web-app-boilerplate/ui/components/input";
+import { InputOTPWithSeparator } from "@/components/InputOTPWithSeparator";
 import { Label } from "@complete-web-app-boilerplate/ui/components/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@complete-web-app-boilerplate/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@complete-web-app-boilerplate/ui/components/card";
 
 export default function EmailVerificationPage() {
   const [params] = useSearchParams();
@@ -14,8 +20,12 @@ export default function EmailVerificationPage() {
   const [email] = useState(params.get("email") ?? "");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(location.state?.error ?? null);
-  const [notice, setNotice] = useState<string | null>(location.state?.notice ?? null);
+  const [error, setError] = useState<string | null>(
+    location.state?.error ?? null,
+  );
+  const [notice, setNotice] = useState<string | null>(
+    location.state?.notice ?? null,
+  );
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -45,7 +55,9 @@ export default function EmailVerificationPage() {
     try {
       await resendVerification(email.trim());
 
-      setNotice("Jika email terdaftar dan belum diverifikasi, kode telah dikirim.");
+      setNotice(
+        "If email is registered and not verified, code has been resent.",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengirim kode.");
     } finally {
@@ -54,9 +66,12 @@ export default function EmailVerificationPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Email Verification</CardTitle>
+    <Card className="w-full max-w-sm bg-card/60">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Email verification</CardTitle>
+        <CardDescription>
+          Enter the six-digit verification code sent to your email.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4" onSubmit={submit}>
@@ -70,23 +85,27 @@ export default function EmailVerificationPage() {
               {notice}
             </p>
           )}
-          <Label htmlFor="verify-email">Email</Label>
-          <Label htmlFor="verify-code">OTP Code</Label>
-          <Input
+          <Label htmlFor="verify-code" className="sr-only">OTP Code</Label>
+          <InputOTPWithSeparator
             id="verify-code"
+            containerClassName="justify-center"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
+            pattern="[0-9]*"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={setCode}
             required
             disabled={busy}
           />
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy || code.length !== 6}>
             Verify
           </Button>
-          <Button type="button" variant="outline" disabled={busy || !email} onClick={resend}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy || !email}
+            onClick={resend}
+          >
             Resend Code
           </Button>
           <Link className="text-center text-sm" to="/auth/sign-in">
