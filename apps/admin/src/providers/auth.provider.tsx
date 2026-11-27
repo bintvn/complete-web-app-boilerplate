@@ -1,25 +1,93 @@
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { AuthContext, type AuthContextValue } from "../contexts/auth.context";
-import { apiRequest } from "@/lib/api";
 import { FullscreenLoader } from "@/components/fullscreen-loader";
-import type { TokenResponse } from "@/types/api";
-import type { UserDTO } from "@/types/dtos";
 import { APIError } from "@/lib/api/error";
+
+import { client } from "@complete-web-app-boilerplate/sdk/client.gen";
+import {
+  authSignIn,
+  authMe,
+  authRefresh,
+  type AuthSignInResponse,
+  type AuthRefreshResponse,
+  type AuthMeResponse,
+} from "@complete-web-app-boilerplate/sdk";
+
+client.setConfig({
+  baseUrl: import.meta.env.VITE_API_URL,
+  credentials: "include",
+});
+
+type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
+
+let inMemoryToken: TokenResponse | null = null;
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 type AuthProviderProps = {
   children: ReactNode;
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<TokenResponse | null>(() =>
-    apiRequest.getInMemoryAccessToken(),
-  );
-  const [user, setUser] = useState<UserDTO | null>(null);
+  const [token, setToken] = useState<TokenResponse | null>(() => inMemoryToken);
+  const [user, setUser] = useState<AuthMeResponse["data"] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const saveToken = useCallback((nextToken: TokenResponse | null) => {
+    inMemoryToken = nextToken;
     setToken(nextToken);
   }, []);
+
+  useEffect(() => {
+    const reqInterceptor = client.interceptors.request.use((request) => {
+      if (inMemoryToken?.accessToken) {
+        request.headers.set("Authorization", `Bearer ${inMemoryToken.accessToken}`);
+      }
+      return request;
+    });
+
+    const resInterceptor = client.interceptors.response.use(async (response, request) => {
+      const isAuthEndpoint = request.url.includes("/auth/refresh") || request.url.includes("/auth/sign-in") || request.url.includes("/auth/sign-up");
+
+      if (response.status !== 401 || isAuthEndpoint) {
+        return response;
+      }
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = (async () => {
+          try {
+            const { data: result, error } = await authRefresh();
+
+            if (error || !result?.data) {
+              saveToken(null);
+              setUser(null);
+              return null;
+            }
+
+            saveToken(result.data);
+            return result.data.accessToken;
+          } finally {
+            isRefreshing = false;
+          }
+        })();
+      }
+
+      const newAccessToken = await refreshPromise;
+      if (!newAccessToken) return response;
+
+      const retryRequest = new Request(request, {
+        headers: new Headers(request.headers),
+      });
+      retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
+      return fetch(retryRequest);
+    });
+
+    return () => {
+      client.interceptors.request.eject(reqInterceptor);
+      client.interceptors.response.eject(resInterceptor);
+    };
+  }, [saveToken]);
 
   const value: AuthContextValue = {
     token,
@@ -27,34 +95,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     setLoading,
     async signIn(input) {
-      const result = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/sign-in`,
-        {
-          body: JSON.stringify(input),
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const { data: result, error } = await authSignIn({
+        body: input,
+      });
 
-      const data = await result.json();
-      if (data.errors && Array.isArray(data.errors)) {
-        throw new APIError("BAD_EMAIL", data.errors[0].message);
+      if (error) {
+        if (error instanceof APIError) {
+          throw error;
+        }
+
+        if ("message" in error) {
+          throw new APIError("UNAUTHORIZED", error.message);
+        }
+
+        if ("errors" in error) {
+          throw new APIError("UNAUTHORIZED", error.errors[0].message);
+        }
+
+        console.error(error);
+
+        throw new Error("Unknown error");
       }
-      // setUser({
-      //   id: "1",
-      //   createdAt: new Date().toISOString(),
-      //   updatedAt: null,
-      //   email: input.email,
-      //   isDisabled: false,
-      //   isEmailVerified: true,
-      //   name: "Bintan Siregar",
-      // });
+
+      if (result.data) {
+        saveToken(result.data);
+      }
+
+      setUser(await value.me());
 
       return {
         success: true,
       };
+    },
+    async me() {
+      const { data: result, error } = await authMe();
+
+      if (error) {
+        if (error instanceof APIError) {
+          throw error;
+        }
+
+        console.error(error);
+
+        throw new Error("Unknown error");
+      }
+
+      return result.data;
     },
     async signUp(input) {
       console.log(input);

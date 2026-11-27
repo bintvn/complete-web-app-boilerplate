@@ -28,7 +28,7 @@ export async function start() {
       await seeds(dbMain);
     }
 
-    const app = createApp(appConfig, dbMain);
+    const { app } = createApp(appConfig, dbMain);
 
     await new Promise<void>((resolve, reject) => {
       server = app.listen(

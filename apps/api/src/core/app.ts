@@ -23,6 +23,7 @@ const createApp = (appConfig: AppConfig, dbMain: DataSource) => {
     coreContainer.openapiModule,
     authMiddleware
   );
+  const container = { ...coreContainer, ...appContainer };
   const router = createRouter(coreContainer, appContainer);
   const middleware = createMiddlewares();
   const errorHandler = createErrorHandler();
@@ -45,7 +46,10 @@ const createApp = (appConfig: AppConfig, dbMain: DataSource) => {
   app.use(router);
   app.use(errorHandler);
 
-  return app;
+  return {
+    app,
+    container,
+  };
 };
 
 export default createApp;

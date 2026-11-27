@@ -1,20 +1,16 @@
 import { createContext, type Dispatch, type SetStateAction } from "react";
-import type { UserDTO } from "@/types/dtos/user.dto";
-import type {
-  SignInParams,
-  SignInResponse,
-  SignOutResponse,
-  SignUpParams,
-  SignUpResponse,
-} from "@/types/auth";
-import type { TokenResponse } from "@/types/api";
+import type { SignInParams, SignInResponse, SignOutResponse, SignUpParams, SignUpResponse } from "@/types/auth";
+import type { AuthMeResponse, AuthRefreshResponse, AuthSignInResponse } from "@complete-web-app-boilerplate/sdk";
+
+type TokenResponse = AuthSignInResponse["data"] | AuthRefreshResponse["data"];
 
 export type AuthContextValue = {
   token: TokenResponse | null;
-  user: UserDTO | null;
+  user: AuthMeResponse["data"] | null;
   loading: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
   signIn: (input: SignInParams) => Promise<SignInResponse>;
+  me: () => Promise<AuthMeResponse["data"]>;
   signUp: (input: SignUpParams) => Promise<SignUpResponse>;
   signOut: () => Promise<SignOutResponse>;
 };

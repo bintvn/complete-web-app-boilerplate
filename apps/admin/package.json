@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@complete-web-app-boilerplate/sdk": "workspace:*",
     "@complete-web-app-boilerplate/ui": "workspace:*",
     "@hookform/resolvers": "^7.0.9",
     "@tailwindcss/vite": "^4.3.5",

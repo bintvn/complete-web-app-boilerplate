@@ -1,0 +1,26 @@
+{
+  "name": "@complete-web-app-boilerplate/sdk",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client.gen": {
+      "types": "./dist/client.gen.d.ts",
+      "default": "./dist/client.gen.js"
+    }
+  },
+  "scripts": {
+    "generate": "openapi-ts",
+    "build": "tsc",
+    "clean": "rm -rf dist src"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
+    "typescript": "~6.0.3"
+  }
+}
