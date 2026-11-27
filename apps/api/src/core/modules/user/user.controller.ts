@@ -6,7 +6,6 @@ import {
 } from '@complete-web-app-boilerplate/shared/core/modules/user';
 import type UserService from './user.service.js';
 import { NotFoundError } from '../../../core/errors.js';
-
 import { serializeUser } from './user.serializer.js';
 
 export default class UserController {

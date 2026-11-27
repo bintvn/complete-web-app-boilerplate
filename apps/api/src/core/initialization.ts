@@ -63,7 +63,15 @@ export async function start() {
   }
 
   async function handleStartupFailure(error: unknown) {
-    console.error('Server startup failed:', error);
+    let errorMessage: string;
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = 'Unknown error';
+    }
+
+    console.error('Server startup failed:', errorMessage);
 
     try {
       if (dbMain.isInitialized) await dbMain.destroy();

@@ -6,8 +6,7 @@ import {
 } from '../../middlewares/auth.middleware.js';
 import type { SessionEntity } from '../session/entities/session.entity.js';
 import { AuthError } from '../../errors.js';
-import { serializeDate, toResponse } from '../../response-serializer.js';
-import type { SessionInfo, ClientMetadata } from '../../types/auth.types.js';
+import { toResponse } from '../../response-serializer.js';
 import {
   authMeResponseSchema,
   authMessageResponseSchema,
@@ -22,19 +21,11 @@ import {
   resendEmailVerificationSchema,
   signInSchema,
   verifyEmailSchema,
+  type ClientMetadata,
 } from '@complete-web-app-boilerplate/shared/core/modules/auth';
 import { IS_DEV } from '../../constants.js';
 import { serializeUser } from '../user/user.serializer.js';
 import type { AppConfig } from '../../types/app.types.js';
-
-function serializeSession(session: SessionInfo) {
-  return {
-    ...session,
-    createdAt: serializeDate(session.createdAt),
-    lastUsedAt: serializeDate(session.lastUsedAt),
-    expiresAt: serializeDate(session.expiresAt),
-  };
-}
 
 export class AuthController {
   private readonly authService: AuthService;
@@ -117,7 +108,7 @@ export class AuthController {
     res.status(200).json(
       toResponse(authSessionResponseSchema, {
         success: true,
-        data: serializeSession(data),
+        data,
       })
     );
   };
@@ -132,7 +123,7 @@ export class AuthController {
     res.status(200).json(
       toResponse(authSessionsResponseSchema, {
         success: true,
-        data: data.map(serializeSession),
+        data,
       })
     );
   };

@@ -9,16 +9,7 @@ import { IsNull, Not, type EntityManager } from 'typeorm';
 import { AuthError, NotFoundError, TokenExpiredError } from '../../errors.js';
 import type {
   AccessTokenPayload,
-  AuthenticatedUser,
-  AuthResult,
-  ChangeEmailInput,
-  ChangePasswordInput,
-  ClientMetadata,
   RefreshTokenPayload,
-  RegisterInput,
-  SessionInfo,
-  SignInInput,
-  TokenPair,
 } from '../../types/auth.types.js';
 import type UserService from '../user/user.service.js';
 import type RoleService from '../role/role.service.js';
@@ -31,6 +22,15 @@ import type SessionService from '../session/session.service.js';
 import type VerificationService from '../verification/verification.service.js';
 import { CoreBaseService } from '../../core-base.service.js';
 import type { AppConfig } from '../../types/app.types.js';
+import type {
+  AuthTokensSchema,
+  ChangeEmailInput,
+  ChangePasswordInput,
+  ClientMetadata,
+  RegisterInput,
+  SessionInfo,
+  SignInInput,
+} from '@complete-web-app-boilerplate/shared/core/modules/auth';
 
 const EMAIL_VERIFICATION_PURPOSE = 'verify_email';
 
@@ -98,7 +98,7 @@ export class AuthService extends CoreBaseService {
     });
   }
 
-  public async signin(input: SignInInput): Promise<AuthResult> {
+  public async signin(input: SignInInput): Promise<AuthTokensSchema> {
     const normalizedEmail = this.normalizeEmail(input.email);
 
     const user = await this.userService.repository.findOne({
@@ -135,9 +135,8 @@ export class AuthService extends CoreBaseService {
     if (!user.isEmailVerified)
       throw new AuthError('Email is not verified', 400, 'EMAIL_NOT_VERIFIED');
 
-    const authUser: AuthenticatedUser = {
+    const authUser = {
       id: user.id,
-      name: user.name,
       email: user.email,
       roles: this.extractRoles(user),
     };
@@ -148,7 +147,7 @@ export class AuthService extends CoreBaseService {
   public async refresh(
     refreshToken: string,
     metadata?: ClientMetadata
-  ): Promise<AuthResult> {
+  ): Promise<AuthTokensSchema> {
     const payload = this.verifyRefreshToken(refreshToken);
 
     const session = await this.sessionService.repository.findOne({
@@ -191,9 +190,8 @@ export class AuthService extends CoreBaseService {
 
     if (!user) throw new AuthError('User not found', 401, 'USER_NOT_FOUND');
 
-    const authUser: AuthenticatedUser = {
+    const authUser = {
       id: user.id,
-      name: user.name,
       email: user.email,
       roles: this.extractRoles(user),
     };
@@ -396,7 +394,12 @@ export class AuthService extends CoreBaseService {
     });
   }
 
-  public async changePassword(input: ChangePasswordInput): Promise<void> {
+  public async changePassword(
+    input: {
+      userId: UserEntity['id'];
+      currentSessionId: SessionEntity['id'];
+    } & ChangePasswordInput
+  ): Promise<void> {
     const user = await this.userService.repository.findOne({
       where: { id: input.userId },
     });
@@ -418,7 +421,9 @@ export class AuthService extends CoreBaseService {
       await this.signoutAll(input.userId, input.currentSessionId);
   }
 
-  public async changeEmail(input: ChangeEmailInput): Promise<void> {
+  public async changeEmail(
+    input: { userId: UserEntity['id'] } & ChangeEmailInput
+  ): Promise<void> {
     const user = await this.userService.repository.findOne({
       where: { id: input.userId },
     });
@@ -504,9 +509,13 @@ export class AuthService extends CoreBaseService {
   }
 
   private async createSessionAndTokens(
-    user: AuthenticatedUser,
+    user: {
+      id: UserEntity['id'];
+      email: UserEntity['email'];
+      roles: RoleEntity['slug'][];
+    },
     metadata?: ClientMetadata
-  ): Promise<AuthResult> {
+  ): Promise<AuthTokensSchema> {
     const now = new Date();
     const expiresAt = new Date(
       now.getTime() + this.config.auth.refreshExpiresInSeconds * 1000
@@ -538,9 +547,13 @@ export class AuthService extends CoreBaseService {
   }
 
   private generateTokenPair(
-    user: AuthenticatedUser,
+    user: {
+      id: UserEntity['id'];
+      email: UserEntity['email'];
+      roles: RoleEntity['slug'][];
+    },
     sessionId: SessionEntity['id']
-  ): TokenPair {
+  ): AuthTokensSchema {
     const subject = user.id;
     const sid = sessionId;
 
@@ -682,9 +695,9 @@ export class AuthService extends CoreBaseService {
       id: session.id,
       userAgent: session.userAgent,
       ipAddress: session.ipAddress,
-      createdAt: session.createdAt,
-      lastUsedAt: session.lastUsedAt,
-      expiresAt: session.expiresAt,
+      createdAt: session.createdAt.toJSON(),
+      lastUsedAt: session.lastUsedAt ? session.lastUsedAt.toJSON() : null,
+      expiresAt: session.expiresAt.toJSON(),
       isCurrent:
         currentSessionId !== undefined && session.id === currentSessionId,
     };

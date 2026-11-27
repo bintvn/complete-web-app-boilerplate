@@ -40,47 +40,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const reqInterceptor = client.interceptors.request.use((request) => {
       if (inMemoryToken?.accessToken) {
-        request.headers.set("Authorization", `Bearer ${inMemoryToken.accessToken}`);
+        request.headers.set(
+          "Authorization",
+          `Bearer ${inMemoryToken.accessToken}`,
+        );
       }
       return request;
     });
 
-    const resInterceptor = client.interceptors.response.use(async (response, request) => {
-      const isAuthEndpoint = request.url.includes("/auth/refresh") || request.url.includes("/auth/sign-in") || request.url.includes("/auth/sign-up");
+    const resInterceptor = client.interceptors.response.use(
+      async (response, request) => {
+        const isAuthEndpoint =
+          request.url.includes("/auth/refresh") ||
+          request.url.includes("/auth/sign-in") ||
+          request.url.includes("/auth/sign-up");
 
-      if (response.status !== 401 || isAuthEndpoint) {
-        return response;
-      }
+        if (response.status !== 401 || isAuthEndpoint) {
+          return response;
+        }
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-        refreshPromise = (async () => {
-          try {
-            const { data: result, error } = await authRefresh();
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = (async () => {
+            try {
+              const { data: result, error } = await authRefresh();
 
-            if (error || !result?.data) {
-              saveToken(null);
-              setUser(null);
-              return null;
+              if (error || !result?.data) {
+                saveToken(null);
+                setUser(null);
+                return null;
+              }
+
+              saveToken(result.data);
+              return result.data.accessToken;
+            } finally {
+              isRefreshing = false;
             }
+          })();
+        }
 
-            saveToken(result.data);
-            return result.data.accessToken;
-          } finally {
-            isRefreshing = false;
-          }
-        })();
-      }
+        const newAccessToken = await refreshPromise;
+        if (!newAccessToken) return response;
 
-      const newAccessToken = await refreshPromise;
-      if (!newAccessToken) return response;
-
-      const retryRequest = new Request(request, {
-        headers: new Headers(request.headers),
-      });
-      retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
-      return fetch(retryRequest);
-    });
+        const retryRequest = new Request(request, {
+          headers: new Headers(request.headers),
+        });
+        retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
+        return fetch(retryRequest);
+      },
+    );
 
     return () => {
       client.interceptors.request.eject(reqInterceptor);
@@ -99,9 +107,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
-        if ("code" in error && error.code === "VALIDATION_ERROR" && "errors" in error) {
+        if (
+          "code" in error &&
+          error.code === "VALIDATION_ERROR" &&
+          "errors" in error
+        ) {
           throw new Error(error.errors.join(", "));
-        } else if ("code" in error && error.code !== "VALIDATION_ERROR" && "message" in error) {
+        } else if (
+          "code" in error &&
+          error.code !== "VALIDATION_ERROR" &&
+          "message" in error
+        ) {
           throw new Error(error.message);
         }
 

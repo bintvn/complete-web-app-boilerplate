@@ -18,6 +18,7 @@
     "build:api": "turbo run build --filter=@complete-web-app-boilerplate/api",
     "build:shared": "turbo run build --filter=@complete-web-app-boilerplate/shared",
     "build:sdk": "turbo run build --filter=@complete-web-app-boilerplate/sdk",
+    "build:admin": "turbo run build --filter=@complete-web-app-boilerplate/admin",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "typecheck": "turbo run typecheck"
