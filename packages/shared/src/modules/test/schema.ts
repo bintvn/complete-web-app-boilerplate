@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { baseSchema } from "../../core/base.schema.js";
-import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { z } from 'zod';
+import { baseSchema } from '../../core/base.schema.js';
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 
 extendZodWithOpenApi(z);
 
@@ -9,7 +9,7 @@ export const testBaseSchema = baseSchema
     id: z.uuid(),
     name: z.string(),
   })
-  .openapi("TestBase");
+  .openapi('TestBase');
 export const createTestSchema = z.strictObject({
   name: z.string().trim().min(1).max(255),
 });

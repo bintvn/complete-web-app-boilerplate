@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { parseBody, parsePatchId } from '../../core/validation.js';
 import {
   createPostSchema,
+  postBaseSchema,
   postResponseSchema,
   updatePostSchema,
 } from '@complete-web-app-boilerplate/shared/modules/post';
@@ -34,7 +35,7 @@ export default class PostController {
   getAll = async (_request: Request, response: Response) => {
     const posts = await this.service.getAllWithRelations();
 
-    response.json({ data: posts.map(serializePost) });
+    response.json(posts.map((post) => toResponse(postBaseSchema, post)));
   };
 
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -45,7 +46,7 @@ export default class PostController {
         `${this.name} with ID ${request.params.id} not found`
       );
 
-    response.json({ data: serializePost(post) });
+    response.json(serializePost(post));
   };
 
   create = async (request: Request, response: Response) => {
@@ -60,7 +61,7 @@ export default class PostController {
       slug: data.slug,
     });
 
-    response.status(201).json({ data: serializePost(post) });
+    response.status(201).json(serializePost(post));
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

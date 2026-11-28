@@ -16,10 +16,10 @@ export default class TestController {
 
   getAll = async (_request: Request, response: Response) => {
     const records = await this.service.getAll();
-    response.json({
-      data: records.map((record) => toResponse(testBaseSchema, record)),
-    });
+
+    response.json(records.map((record) => toResponse(testBaseSchema, record)));
   };
+
   get = async (request: Request<{ id: string }>, response: Response) => {
     const record = await this.service.get(request.params.id);
 
@@ -28,14 +28,14 @@ export default class TestController {
         `${this.name} with ID ${request.params.id} not found`
       );
 
-    response.json({ data: toResponse(testBaseSchema, record) });
+    response.json(toResponse(testBaseSchema, record));
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(createTestSchema, request.body);
     const record = await this.service.create(data);
 
-    response.status(201).json({ data: toResponse(testBaseSchema, record) });
+    response.status(201).json(toResponse(testBaseSchema, record));
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

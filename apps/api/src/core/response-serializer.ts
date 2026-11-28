@@ -3,9 +3,11 @@ import { InternalServerError } from './errors.js';
 
 export function toResponse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
+
   if (!result.success) {
     throw new InternalServerError(undefined, { cause: result.error });
   }
+
   return result.data;
 }
 

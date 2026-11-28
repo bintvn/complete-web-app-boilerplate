@@ -1,21 +1,21 @@
-import "server-only";
+import 'server-only';
 
-import { listPosts } from "@complete-web-app-boilerplate/sdk";
-import { cacheLife, cacheTag } from "next/cache";
-import { getServerClient } from "../lib/api";
+import { listPosts } from '@complete-web-app-boilerplate/sdk';
+import { cacheLife, cacheTag } from 'next/cache';
+import { getServerClient } from '../lib/api';
 
 export async function getPosts() {
-  "use cache";
-  cacheLife("max");
-  cacheTag("posts");
+  'use cache';
+  cacheLife('max');
+  cacheTag('posts');
 
-  const { data: result, error } = await listPosts({
+  const { data, error } = await listPosts({
     client: await getServerClient(),
   });
 
-  if (!result && error) {
+  if (!data && error) {
     throw error;
   }
 
-  return result.data || [];
+  return data;
 }
