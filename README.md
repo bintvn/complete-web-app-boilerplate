@@ -24,6 +24,10 @@ Start the development API from the workspace root with `pnpm dev:api`. With the 
 
 Protected operations require a Bearer access token. Scalar loads its interface assets from jsDelivr.
 
+## Building the public website
+
+The home page fetches posts during prerendering, so the API must be running and reachable when `pnpm build` or `pnpm build:web` runs. Set `API_URL` in the web app's production environment to its absolute HTTP(S) address; `apps/web/.env.production` defaults to `http://localhost:3000`. The build fails if the API cannot return posts. The web build is not cached by Turbo, so each build checks the API and captures current data.
+
 ## Email verification API
 
 Set `OTP_SECRET` to a dedicated random secret of at least 32 bytes in the API environment. For example, generate one locally with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, and `SMTP_FROM_EMAIL`. Set `SMTP_LOGIN_EMAIL` and `SMTP_LOGIN_PASSWORD` together if the SMTP server requires authentication. Development startup uses the existing TypeORM schema synchronization to create the verification table.

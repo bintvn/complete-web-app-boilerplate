@@ -6,7 +6,7 @@
   },
   "tasks": {
     "generate:openapi": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["@complete-web-app-boilerplate/api#build"],
       "outputs": ["dist/openapi.json"]
     },
     "generate": {
@@ -18,6 +18,16 @@
       "env": ["NODE_ENV"],
       "inputs": ["$TURBO_DEFAULT$", ".env", ".env.local", ".env.production", ".env.production.local"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"]
+    },
+    "@complete-web-app-boilerplate/sdk#build": {
+      "dependsOn": ["^build", "generate"],
+      "outputs": ["dist/**"]
+    },
+    "@complete-web-app-boilerplate/web#build": {
+      "dependsOn": ["^build"],
+      "env": ["NODE_ENV", "API_URL", "NEXT_PUBLIC_API_URL"],
+      "cache": false,
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "dev": {
       "cache": false,
