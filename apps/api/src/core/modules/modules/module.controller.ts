@@ -3,7 +3,7 @@ import { parseBody, parsePatchId } from '../../validation.js';
 import type ModuleService from './module.service.js';
 import {
   createModuleSchema,
-  moduleResponseSchema,
+  moduleBaseSchema,
   updateModuleSchema,
 } from '@complete-web-app-boilerplate/shared/core/modules/module';
 
@@ -14,7 +14,7 @@ import {
 import type { ModuleEntity } from './entities/module.entity.js';
 
 function serializeModule(value: ModuleEntity) {
-  return toResponse(moduleResponseSchema, serializeRelationDates(value));
+  return toResponse(moduleBaseSchema, serializeRelationDates(value));
 }
 
 export default class ModuleController {

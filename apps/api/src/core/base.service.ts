@@ -1,5 +1,6 @@
 import {
   EntityManager,
+  In,
   IsNull,
   Not,
   type DeepPartial,
@@ -50,6 +51,16 @@ export abstract class BaseService<
     });
   }
 
+  async getByIds(ids: TEntity['id'][], manager?: EntityManager) {
+    const repository = manager
+      ? manager.getRepository(this.repository.target)
+      : this.repository;
+
+    return await repository.find({
+      where: { id: In(ids) } as FindOptionsWhere<TEntity>,
+    });
+  }
+
   async create(data: DeepPartial<TEntity>, manager?: EntityManager) {
     const repository = manager
       ? manager.getRepository(this.repository.target)
@@ -70,7 +81,12 @@ export abstract class BaseService<
       : this.repository;
 
     if (Object.keys(newData).length > 0) {
-      await repository.update(id, newData);
+      const payload = {
+        updatedAt: new Date(),
+        ...newData,
+      } as QueryDeepPartialEntity<TEntity>;
+
+      await repository.update(id, payload);
 
       return true;
     }

@@ -4,7 +4,7 @@ import { parseBody, parsePatchId } from '../../core/validation.js';
 import { toResponse } from '../../core/response-serializer.js';
 import {
   createTestSchema,
-  testResponseSchema,
+  testBaseSchema,
   updateTestSchema,
 } from '@complete-web-app-boilerplate/shared/modules/test';
 import type TestService from './test.service.js';
@@ -17,7 +17,7 @@ export default class TestController {
   getAll = async (_request: Request, response: Response) => {
     const records = await this.service.getAll();
     response.json({
-      data: records.map((record) => toResponse(testResponseSchema, record)),
+      data: records.map((record) => toResponse(testBaseSchema, record)),
     });
   };
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -28,14 +28,14 @@ export default class TestController {
         `${this.name} with ID ${request.params.id} not found`
       );
 
-    response.json({ data: toResponse(testResponseSchema, record) });
+    response.json({ data: toResponse(testBaseSchema, record) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(createTestSchema, request.body);
     const record = await this.service.create(data);
 
-    response.status(201).json({ data: toResponse(testResponseSchema, record) });
+    response.status(201).json({ data: toResponse(testBaseSchema, record) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

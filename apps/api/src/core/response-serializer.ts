@@ -14,7 +14,11 @@ export function serializeDate(value: Date | null | undefined) {
 }
 
 export function serializeRelationDates<
-  T extends { createdAt?: Date; updatedAt?: Date; deletedAt?: Date | null },
+  T extends {
+    createdAt?: Date;
+    updatedAt?: Date | null;
+    deletedAt?: Date | null;
+  },
 >(entity: T) {
   return {
     ...entity,

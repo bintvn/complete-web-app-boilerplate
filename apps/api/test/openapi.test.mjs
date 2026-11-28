@@ -88,7 +88,15 @@ const permissions = {
   canUpdate: false,
   canDelete: false,
 };
-const userRecord = { ...coreRecord, ...userFields, passwordHash: 'private' };
+const userRecord = {
+  ...coreRecord,
+  ...userFields,
+  password: 'private',
+  passwordHash: 'private',
+  sessions: [{ secret: 'private' }],
+  roleUsers: [{ secret: 'private' }],
+  posts: [{ secret: 'private' }],
+};
 const roleRecord = { ...coreRecord, ...roleFields, accessControls: [] };
 const moduleRecord = { ...coreRecord, ...moduleFields, accessControls: [] };
 const accessRecord = {
@@ -199,7 +207,7 @@ let server;
 let origin;
 
 before(async () => {
-  server = createApp(config, dataSource).listen(0, '127.0.0.1');
+  server = createApp(config, dataSource).app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   origin = `http://127.0.0.1:${server.address().port}`;
 });
@@ -228,6 +236,35 @@ function request(
   });
 }
 
+test('user OpenAPI and responses exclude private fields and relations', async (t) => {
+  const documents = await Promise.all(
+    ['/openapi.json', '/docs/openapi.json'].map(async (path) => {
+      const response = await request(path);
+      assert.equal(response.status, 200);
+      return response.json();
+    })
+  );
+  assert.deepEqual(documents[0], documents[1]);
+  const properties = documents[0].components.schemas.User.properties;
+  for (const field of [
+    'password',
+    'passwordHash',
+    'sessions',
+    'roleUsers',
+    'posts',
+  ]) {
+    assert.equal(properties[field], undefined);
+  }
+  t.mock.method(AuthService.prototype, 'me', async () => userRecord);
+  const expected = { ...coreFields, deletedAt: null, ...userFields };
+  const users = await request('/users', { authenticated: true });
+  assert.equal(users.status, 200);
+  assert.deepEqual(await users.json(), { data: [expected] });
+  const me = await request('/auth/me', { authenticated: true });
+  assert.equal(me.status, 200);
+  assert.deepEqual(await me.json(), { success: true, data: expected });
+});
+
 test('OpenAPI describes the two modules and their security and request schemas', async () => {
   const response = await request('/docs/openapi.json');
   assert.equal(response.status, 200);
@@ -236,8 +273,30 @@ test('OpenAPI describes the two modules and their security and request schemas',
   assert.equal(legacyResponse.status, 200);
   await legacyResponse.text();
   assert.equal(spec.openapi, '3.1.1');
-  for (const component of ['ApiError', 'Category', 'Post']) {
+  for (const component of ['ApiError', 'Category', 'Post', 'User']) {
     assert.ok(spec.components.schemas[component]);
+  }
+  const userProperties = spec.components.schemas.User.properties;
+  for (const field of [
+    'password',
+    'passwordHash',
+    'sessions',
+    'roleUsers',
+    'posts',
+  ]) {
+    assert.equal(userProperties[field], undefined);
+  }
+  for (const field of [
+    'id',
+    'createdAt',
+    'updatedAt',
+    'deletedAt',
+    'disabled',
+    'name',
+    'email',
+    'isEmailVerified',
+  ]) {
+    assert.ok(userProperties[field]);
   }
   assert.deepEqual(spec.servers, [{ url: '/' }]);
   assert.deepEqual(spec.components.securitySchemes.bearerAuth, {

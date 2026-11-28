@@ -6,6 +6,10 @@ import {
   updateCategorySchema,
 } from '@complete-web-app-boilerplate/shared/modules/category';
 import type OpenapiService from '../../core/modules/openapi/openapi.service.js';
+import {
+  categoryBaseSchema,
+  categorySchema,
+} from '../../../../../packages/shared/dist/modules/category/fields.schema.js';
 
 const categoryResponseSchema = responseSchema.meta({ id: 'Category' });
 
@@ -22,10 +26,10 @@ export function registerCategoryOpenApi(service: OpenapiService) {
     tags,
     security: [],
     responses: {
-      200: service.jsonResponse(
-        'List of categories.',
-        z.object({ data: z.array(categoryResponseSchema) })
-      ),
+      200: {
+        description: 'List of categories.',
+        content: { 'application/json': { schema: categoryBaseSchema } },
+      },
       500: service.errors.internal,
     },
   });
@@ -39,7 +43,10 @@ export function registerCategoryOpenApi(service: OpenapiService) {
     security: [],
     request: { params: id },
     responses: {
-      200: service.jsonResponse('Category details.', categoryData),
+      200: {
+        description: 'Category details.',
+        content: { 'application/json': { schema: categorySchema } },
+      },
       404: service.errors.notFound,
       500: service.errors.internal,
     },

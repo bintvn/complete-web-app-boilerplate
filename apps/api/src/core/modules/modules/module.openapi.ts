@@ -1,13 +1,12 @@
 import {
   createModuleSchema,
-  moduleResponseSchema,
+  moduleBaseSchema,
   updateModuleSchema,
 } from '@complete-web-app-boilerplate/shared/core/modules/module';
 import type OpenapiService from '../openapi/openapi.service.js';
 import { registerCrudOpenApi } from '../openapi/register-crud.openapi.js';
 
 export const moduleRoutePath = 'modules';
-const responseSchema = moduleResponseSchema.meta({ id: 'Module' });
 
 export function registerModuleOpenApi(service: OpenapiService) {
   registerCrudOpenApi(service, {
@@ -16,7 +15,8 @@ export function registerModuleOpenApi(service: OpenapiService) {
     tag: 'Modules',
     createSchema: createModuleSchema,
     updateSchema: updateModuleSchema,
-    responseSchema,
+    responseBaseSchema: moduleBaseSchema,
+    responseSchema: moduleBaseSchema,
     detailReturnsNotFound: false,
   });
 }

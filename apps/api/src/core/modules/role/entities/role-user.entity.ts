@@ -18,7 +18,7 @@ export class RoleUserEntity extends BaseEntity {
   })
   role?: Relation<RoleEntity>;
 
-  @ManyToOne(() => UserEntity, (user) => user.userRoles, {
+  @ManyToOne(() => UserEntity, (user) => user.roleUsers, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
     nullable: false,

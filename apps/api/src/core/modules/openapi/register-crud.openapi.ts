@@ -8,7 +8,8 @@ type CrudOpenApiOptions = {
   tag: string;
   createSchema: z.ZodType;
   updateSchema: z.ZodType;
-  responseSchema: z.ZodType;
+  responseBaseSchema: z.ZodType;
+  responseSchema?: z.ZodType;
   detailReturnsNotFound?: boolean;
 };
 
@@ -22,13 +23,13 @@ export function registerCrudOpenApi(
     tag,
     createSchema,
     updateSchema,
+    responseBaseSchema,
     responseSchema,
     detailReturnsNotFound = true,
   } = options;
   const path = `/${routePath}`;
   const itemPath = `${path}/{id}`;
   const id = z.object({ id: z.string() });
-  const data = z.object({ data: responseSchema });
   const tags = [tag];
   const security = service.bearerSecurity;
   const errors = service.errors;
@@ -52,10 +53,12 @@ export function registerCrudOpenApi(
     tags,
     security,
     responses: {
-      200: service.jsonResponse(
-        'Resource list.',
-        z.object({ data: z.array(responseSchema) })
-      ),
+      200: {
+        description: `List of ${tag.toLowerCase()}.`,
+        content: {
+          'application/json': { schema: z.array(responseBaseSchema) },
+        },
+      },
       ...commonErrors,
     },
   });
@@ -68,7 +71,12 @@ export function registerCrudOpenApi(
     security,
     request: { params: id },
     responses: {
-      200: service.jsonResponse('Resource details.', data),
+      200: {
+        description: `Details of ${resource}.`,
+        content: {
+          'application/json': { schema: responseSchema ?? responseBaseSchema },
+        },
+      },
       ...(detailReturnsNotFound && { 404: errors.notFound }),
       ...commonErrors,
     },
@@ -87,7 +95,12 @@ export function registerCrudOpenApi(
       },
     },
     responses: {
-      201: service.jsonResponse('Resource created.', data),
+      201: {
+        description: `Created ${resource}.`,
+        content: {
+          'application/json': { schema: responseSchema ?? responseBaseSchema },
+        },
+      },
       ...writeErrors,
     },
   });

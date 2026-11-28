@@ -1,13 +1,15 @@
 import {
   createRoleSchema,
-  roleResponseSchema,
   updateRoleSchema,
 } from '@complete-web-app-boilerplate/shared/core/modules/role';
 import type OpenapiService from '../openapi/openapi.service.js';
 import { registerCrudOpenApi } from '../openapi/register-crud.openapi.js';
+import {
+  roleBaseSchema,
+  roleSchema,
+} from '@complete-web-app-boilerplate/shared/core/modules/role';
 
 export const roleRoutePath = 'roles';
-const responseSchema = roleResponseSchema.meta({ id: 'Role' });
 
 export function registerRoleOpenApi(service: OpenapiService) {
   registerCrudOpenApi(service, {
@@ -16,7 +18,8 @@ export function registerRoleOpenApi(service: OpenapiService) {
     tag: 'Roles',
     createSchema: createRoleSchema,
     updateSchema: updateRoleSchema,
-    responseSchema,
+    responseBaseSchema: roleBaseSchema,
+    responseSchema: roleSchema,
     detailReturnsNotFound: false,
   });
 }

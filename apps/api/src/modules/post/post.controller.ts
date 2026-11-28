@@ -12,6 +12,7 @@ import {
   toResponse,
 } from '../../core/response-serializer.js';
 import type { PostEntity } from './entities/post.entity.js';
+import { requireAuth } from '../../core/middlewares/auth.middleware.js';
 
 function serializePost(post: PostEntity) {
   return toResponse(
@@ -48,8 +49,16 @@ export default class PostController {
   };
 
   create = async (request: Request, response: Response) => {
+    const auth = requireAuth(request);
     const data = parseBody(createPostSchema, request.body);
-    const post = await this.service.create(data);
+    const post = await this.service.create({
+      user: {
+        id: auth.sub,
+      },
+      title: data.title,
+      content: data.content,
+      slug: data.slug,
+    });
 
     response.status(201).json({ data: serializePost(post) });
   };

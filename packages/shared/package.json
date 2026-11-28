@@ -34,6 +34,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.5.0",
     "typescript": "~6.0.3",
     "zod": "4.6.7"
   }

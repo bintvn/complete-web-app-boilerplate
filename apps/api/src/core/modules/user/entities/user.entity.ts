@@ -32,14 +32,15 @@ export class UserEntity extends BaseEntity {
     name: 'password_hash',
     type: 'varchar',
     length: 255,
+    nullable: false,
   })
-  passwordHash: string;
+  passwordHash: string | null;
 
   @OneToMany(() => SessionEntity, (session) => session.user)
   sessions?: Relation<SessionEntity[]>;
 
   @OneToMany(() => RoleUserEntity, (roleUser) => roleUser.user)
-  userRoles?: Relation<RoleUserEntity[]>;
+  roleUsers?: Relation<RoleUserEntity[]>;
 
   @OneToMany(() => PostEntity, (post) => post.user)
   posts?: Relation<PostEntity[]>;

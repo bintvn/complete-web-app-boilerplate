@@ -6,6 +6,10 @@ import {
   updatePostSchema,
 } from '@complete-web-app-boilerplate/shared/modules/post';
 import type OpenapiService from '../../core/modules/openapi/openapi.service.js';
+import {
+  postBaseSchema,
+  postSchema,
+} from '../../../../../packages/shared/dist/modules/post/post.schema.js';
 
 const postResponseSchema = responseSchema.meta({ id: 'Post' });
 
@@ -22,10 +26,10 @@ export function registerPostOpenApi(service: OpenapiService) {
     tags,
     security: [],
     responses: {
-      200: service.jsonResponse(
-        'List of posts.',
-        z.object({ data: z.array(postResponseSchema) })
-      ),
+      200: {
+        description: 'List of posts.',
+        content: { 'application/json': { schema: postSchema } },
+      },
       500: service.errors.internal,
     },
   });
@@ -39,7 +43,10 @@ export function registerPostOpenApi(service: OpenapiService) {
     security: [],
     request: { params: id },
     responses: {
-      200: service.jsonResponse('Post details.', postData),
+      200: {
+        description: 'Post details.',
+        content: { 'application/json': { schema: postBaseSchema } },
+      },
       404: service.errors.notFound,
       500: service.errors.internal,
     },

@@ -22,6 +22,13 @@ export class SessionEntity extends BaseEntity {
   expiresAt: Date;
 
   @Column({
+    name: 'last_used_at',
+    type: 'datetime',
+    nullable: true,
+  })
+  lastUsedAt: Date | null;
+
+  @Column({
     name: 'revoked_at',
     type: 'datetime',
     nullable: true,
@@ -50,13 +57,6 @@ export class SessionEntity extends BaseEntity {
     nullable: true,
   })
   ipAddress: string | null;
-
-  @Column({
-    name: 'last_used_at',
-    type: 'datetime',
-    nullable: true,
-  })
-  lastUsedAt: Date | null;
 
   @ManyToOne(() => UserEntity, {
     onDelete: 'CASCADE',

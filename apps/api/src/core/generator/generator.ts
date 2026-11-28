@@ -98,18 +98,23 @@ export const generateModule = async (name: string): Promise<string> => {
   );
 
   const sharedSchema = `import { z } from 'zod';
+import { baseSchema } from "../../core/base.schema.js";
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 
+extendZodWithOpenApi(z);
+
+export const ${camelName}BaseSchema = baseSchema
+  .extend({
+    id: z.uuid(),
+    name: z.string(),
+  }).openapi('${pascalName}Base');
 export const create${pascalName}Schema = z.strictObject({
   name: z.string().trim().min(1).max(255),
 });
 export const update${pascalName}Schema = create${pascalName}Schema.partial();
-export const ${camelName}ResponseSchema = z.object({
-  id: z.uuid(),
-  name: z.string(),
-});
 export type Create${pascalName} = z.infer<typeof create${pascalName}Schema>;
 export type Update${pascalName} = z.infer<typeof update${pascalName}Schema>;
-export type ${pascalName}Response = z.infer<typeof ${camelName}ResponseSchema>;
+export type ${pascalName}Base = z.infer<typeof ${camelName}BaseSchema>;
 `;
 
   const legacyIndex = `import type { DataSource } from 'typeorm';
@@ -165,14 +170,13 @@ import { ${camelName}RoutePath, register${pascalName}OpenApi } from './${name}.o
     'index.ts': moduleIndex,
     [`${name}.openapi.ts`]: `import {
   create${pascalName}Schema,
-  ${camelName}ResponseSchema,
+  ${camelName}BaseSchema,
   update${pascalName}Schema,
 } from '@complete-web-app-boilerplate/shared/modules/${name}';
 import type OpenapiService from '../../core/modules/openapi/openapi.service.js';
 import { registerCrudOpenApi } from '../../core/modules/openapi/register-crud.openapi.js';
 
 export const ${camelName}RoutePath = '${routePath}';
-const responseSchema = ${camelName}ResponseSchema.meta({ id: '${pascalName}' });
 
 export function register${pascalName}OpenApi(service: OpenapiService) {
   registerCrudOpenApi(service, {
@@ -181,7 +185,7 @@ export function register${pascalName}OpenApi(service: OpenapiService) {
     tag: '${parts.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')}s',
     createSchema: create${pascalName}Schema,
     updateSchema: update${pascalName}Schema,
-    responseSchema,
+    responseBaseSchema: ${camelName}BaseSchema,
   });
 }
 `,
@@ -219,7 +223,7 @@ import { parseBody, parsePatchId } from '../../core/validation.js';
 import { toResponse } from '../../core/response-serializer.js';
 import {
   create${pascalName}Schema,
-  ${camelName}ResponseSchema,
+  ${camelName}BaseSchema,
   update${pascalName}Schema,
 } from '@complete-web-app-boilerplate/shared/modules/${name}';
 import type ${service} from './${name}.service.js';
@@ -232,7 +236,7 @@ export default class ${controller} {
   getAll = async (_request: Request, response: Response) => {
     const records = await this.service.getAll();
     response.json({
-      data: records.map((record) => toResponse(${camelName}ResponseSchema, record)),
+      data: records.map((record) => toResponse(${camelName}BaseSchema, record)),
     });
   };
   get = async (request: Request<{ id: string }>, response: Response) => {
@@ -243,14 +247,14 @@ export default class ${controller} {
         \`\${this.name} with ID \${request.params.id} not found\`,
       );
 
-    response.json({ data: toResponse(${camelName}ResponseSchema, record) });
+    response.json({ data: toResponse(${camelName}BaseSchema, record) });
   };
 
   create = async (request: Request, response: Response) => {
     const data = parseBody(create${pascalName}Schema, request.body);
     const record = await this.service.create(data);
 
-    response.status(201).json({ data: toResponse(${camelName}ResponseSchema, record) });
+    response.status(201).json({ data: toResponse(${camelName}BaseSchema, record) });
   };
 
   update = async (request: Request<{ id: string }>, response: Response) => {

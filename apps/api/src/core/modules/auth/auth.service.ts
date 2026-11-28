@@ -85,7 +85,7 @@ export class AuthService extends CoreBaseService {
             name: input.name.trim(),
             email: normalizedEmail,
             password: input.password,
-            roleId: role.id,
+            roleIds: [role.id],
           },
           manager
         );
@@ -106,7 +106,7 @@ export class AuthService extends CoreBaseService {
         email: normalizedEmail,
       },
       relations: {
-        userRoles: {
+        roleUsers: {
           role: true,
         },
       },
@@ -118,6 +118,9 @@ export class AuthService extends CoreBaseService {
         401,
         'INVALID_CREDENTIALS'
       );
+
+    if (!user.passwordHash)
+      throw new AuthError('Password not set', 401, 'INVALID_CREDENTIALS');
 
     const isPasswordValid = await verifyPassword(
       user.passwordHash,
@@ -185,7 +188,7 @@ export class AuthService extends CoreBaseService {
 
     const user = await this.userService.repository.findOne({
       where: { id: payload.sub },
-      relations: { userRoles: true },
+      relations: { roleUsers: true },
     });
 
     if (!user) throw new AuthError('User not found', 401, 'USER_NOT_FOUND');
@@ -246,7 +249,7 @@ export class AuthService extends CoreBaseService {
   public async me(userId: UserEntity['id']) {
     const user = await this.userService.repository.findOne({
       where: { id: userId },
-      relations: { userRoles: { role: true } },
+      relations: { roleUsers: { role: true } },
     });
 
     if (!user) throw new AuthError('User not found', 401, 'USER_NOT_FOUND');
@@ -261,7 +264,7 @@ export class AuthService extends CoreBaseService {
     const [user, session] = await Promise.all([
       this.userService.repository.findOne({
         where: { id: userId },
-        relations: { userRoles: { role: true } },
+        relations: { roleUsers: { role: true } },
       }),
       this.sessionService.repository.findOne({
         where: { id: sessionId, user: { id: userId } },
@@ -406,13 +409,15 @@ export class AuthService extends CoreBaseService {
 
     if (!user) throw new AuthError('User not found', 404, 'USER_NOT_FOUND');
 
-    const isOldPasswordValid = await verifyPassword(
-      user.passwordHash,
-      input.oldPassword
-    );
+    if (user.passwordHash) {
+      const isOldPasswordValid = await verifyPassword(
+        user.passwordHash,
+        input.oldPassword
+      );
 
-    if (!isOldPasswordValid)
-      throw new AuthError('Invalid old password', 403, 'INVALID_CREDENTIALS');
+      if (!isOldPasswordValid)
+        throw new AuthError('Invalid old password', 403, 'INVALID_CREDENTIALS');
+    }
 
     user.passwordHash = await hashPassword(input.newPassword);
     await this.userService.repository.save(user);
@@ -678,9 +683,9 @@ export class AuthService extends CoreBaseService {
   }
 
   private extractRoles(user: UserEntity): RoleEntity['slug'][] {
-    if (!user.userRoles) return [];
+    if (!user.roleUsers) return [];
 
-    return user.userRoles
+    return user.roleUsers
       .map((item) => {
         return item.role?.slug;
       })

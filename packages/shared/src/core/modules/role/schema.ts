@@ -1,29 +1,39 @@
 import { z } from "zod";
-import { baseResponseSchema } from "../../base-response.schema.js";
-import { descriptionSchema } from "../../validation.schema.js";
+import { commonSchema } from "../../common.schema.js";
+import { baseSchema } from "../../base.schema.js";
+import { userBaseSchema, UserBaseSchema } from "../user/user.schema.js";
 
-const name = z
-  .string()
-  .min(1)
-  .max(255)
-  .refine((value) => value.trim().length > 0);
-const slug = z
-  .string()
-  .max(255)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?![\s\S])/);
+const { name, slug, description } = commonSchema;
+export const roleBaseSchema = baseSchema
+  .extend({
+    name,
+    slug: slug.openapi({
+      description: "The slug of the role",
+      example: "admin",
+    }),
+    description: description.nullable(),
+  })
+  .openapi("RoleBase");
+
+export type RoleBaseSchema = z.infer<typeof roleBaseSchema>;
+export type RoleSchema = RoleBaseSchema & {
+  users?: UserBaseSchema[];
+};
+
+export const roleSchema: z.ZodType<RoleSchema> = roleBaseSchema.extend({
+  get users() {
+    return userBaseSchema.array().optional();
+  },
+});
 
 export const createRoleSchema = z.strictObject({
   name,
   slug,
-  description: descriptionSchema,
+  description: description.nullable().optional(),
 });
 export const updateRoleSchema = createRoleSchema.partial();
 export type CreateRole = z.infer<typeof createRoleSchema>;
 export type UpdateRole = z.infer<typeof updateRoleSchema>;
 
-export const roleResponseSchema = baseResponseSchema.extend({
-  name: z.string(),
-  slug: z.string(),
-  description: z.string().nullable(),
-});
+export const roleResponseSchema = roleSchema;
 export type RoleResponse = z.infer<typeof roleResponseSchema>;

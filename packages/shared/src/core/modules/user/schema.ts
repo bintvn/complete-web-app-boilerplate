@@ -1,35 +1,50 @@
 import { z } from "zod";
-import { baseResponseSchema } from "../../base-response.schema.js";
+import { commonSchema } from "../../common.schema.js";
+import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { baseSchema } from "../../base.schema.js";
+import { SessionBaseSchema, sessionBaseSchema } from "../auth/session.schema.js";
+import { postBaseSchema, PostBaseSchema } from "../../../modules/post/schema.js";
 
-const name = z
-  .string()
-  .min(1)
-  .max(255)
-  .refine((value) => value.trim().length > 0);
-const email = z.string().trim().toLowerCase().max(255).check(z.email());
-const password = z
-  .string()
-  .min(1)
-  .max(255)
-  .refine((value) => value.trim().length > 0, {
-    error: "Password must contain a non-whitespace character",
-  });
-const roleId = z.uuid();
+extendZodWithOpenApi(z);
+
+const { name, email, password } = commonSchema;
+
+export const userBaseSchema = baseSchema
+  .extend({
+    isEmailVerified: z.boolean(),
+    name,
+    email,
+  })
+  .openapi("UserBase");
+
+export type UserBaseSchema = z.infer<typeof userBaseSchema>;
+
+export type UserSchema = UserBaseSchema & {
+  sessions: SessionBaseSchema[];
+  posts: PostBaseSchema[];
+};
+
+export const userSchema: z.ZodType<UserSchema> = userBaseSchema
+  .extend({
+    get sessions() {
+      return sessionBaseSchema.array();
+    },
+    get posts() {
+      return postBaseSchema.array();
+    },
+  })
+  .openapi("User");
 
 export const createUserSchema = z.strictObject({
   isEmailVerified: z.boolean().optional(),
   name,
   email,
   password,
-  roleId,
+  roleIds: z.uuid().array().optional(),
 });
 export const updateUserSchema = createUserSchema.partial();
 export type CreateUser = z.infer<typeof createUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 
-export const userResponseSchema = baseResponseSchema.extend({
-  isEmailVerified: z.boolean(),
-  name: z.string(),
-  email: z.string(),
-});
+export const userResponseSchema = userBaseSchema;
 export type UserResponse = z.infer<typeof userResponseSchema>;

@@ -1,33 +1,42 @@
 import { z } from "zod";
-import { categoryFieldsSchema } from "../category/fields.schema.js";
-import { postFieldsSchema } from "./fields.schema.js";
-import { relationMetadataSchema } from "../relation-metadata.schema.js";
+import { baseSchema } from "../../core/base.schema.js";
+import { categoryBaseSchema, CategorySchema } from "../category/fields.schema.js";
+import { userBaseSchema, UserBaseSchema } from "../../core/modules/user/user.schema.js";
 
-const title = z
-  .string()
-  .min(1)
-  .max(255)
-  .refine((value) => value.trim().length > 0)
-  .describe("Must contain a non-whitespace character.");
-const slug = z
-  .string()
-  .max(255)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?![\s\S])/);
-const content = z.string().optional();
+export const postBaseSchema = baseSchema
+  .extend({
+    title: z.string(),
+    slug: z.string(),
+    content: z.string().nullable().optional(),
+  })
+  .openapi("PostBase");
+
+export type PostBaseSchema = z.infer<typeof postBaseSchema>;
+export type PostSchema = PostBaseSchema & {
+  categories: CategorySchema[];
+  user: UserBaseSchema;
+};
+
+export const postSchema: z.ZodType<PostSchema> = postBaseSchema
+  .extend({
+    get categories() {
+      return categoryBaseSchema.array();
+    },
+    get user() {
+      return userBaseSchema;
+    },
+  })
+  .openapi("Post");
 
 export const createPostSchema = z.strictObject({
-  title,
-  slug,
-  content,
+  title: postBaseSchema.shape.title,
+  slug: postBaseSchema.shape.title,
+  content: postBaseSchema.shape.content,
   categories: z.array(z.uuid()).optional(),
 });
 export const updatePostSchema = createPostSchema.partial();
 export type CreatePost = z.infer<typeof createPostSchema>;
 export type UpdatePost = z.infer<typeof updatePostSchema>;
 
-export const postResponseSchema = postFieldsSchema.extend({
-  categories: z.array(
-    categoryFieldsSchema.extend(relationMetadataSchema.shape).nullable(),
-  ),
-});
+export const postResponseSchema = postSchema;
 export type PostResponse = z.infer<typeof postResponseSchema>;

@@ -1,6 +1,5 @@
 import {
   CreateDateColumn,
-  UpdateDateColumn,
   Column,
   BaseEntity as TypeOrmBaseEntity,
   PrimaryGeneratedColumn,
@@ -9,6 +8,8 @@ import {
 
 export interface IBaseEntity extends ObjectLiteral {
   id: string;
+  createdAt: Date;
+  updatedAt: Date | null;
   deletedAt: Date | null;
 }
 
@@ -24,14 +25,14 @@ export abstract class BaseEntity extends TypeOrmBaseEntity {
   })
   createdAt: Date;
 
-  @UpdateDateColumn({
+  @Column({
     name: 'updated_at',
     type: 'datetime',
     precision: 6,
-    default: () => 'CURRENT_TIMESTAMP(6)',
-    onUpdate: 'CURRENT_TIMESTAMP(6)',
+    nullable: true,
+    default: null,
   })
-  updatedAt: Date;
+  updatedAt: Date | null;
 
   @Column({
     name: 'deleted_at',

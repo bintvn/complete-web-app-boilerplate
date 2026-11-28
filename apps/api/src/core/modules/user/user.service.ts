@@ -34,33 +34,68 @@ export default class UserService extends BaseService<
       ? manager.getRepository(RoleUserEntity)
       : repository.manager.getRepository(RoleUserEntity);
     const data = createUserSchema.parse(input);
-    const role = await this.dependencies.roleService.get(input.roleId, manager);
+    const roleIdsToCreate: RoleEntity['id'][] = [];
 
-    if (!role) throw new Error('Role with slug "user" not found');
+    if (input.roleIds) {
+      const roles = await this.dependencies.roleService.getByIds(
+        input.roleIds,
+        manager
+      );
+      const roleIds = roles.map((role) => role.id);
+      const roleIdsNotFoundInDB = input.roleIds.filter(
+        (id) => !roleIds.includes(id)
+      );
+
+      if (roleIdsNotFoundInDB.length > 0)
+        throw new NotFoundError(
+          `Roles with IDs ${roleIdsNotFoundInDB.join(', ')} not found`
+        );
+
+      roleIdsToCreate.push(...roleIds);
+    } else {
+      const role = await this.dependencies.roleService.getBy(
+        { slug: 'user' },
+        manager
+      );
+
+      if (!role) throw new NotFoundError('User Role not found');
+
+      roleIdsToCreate.push(role.id);
+    }
+
+    let passwordHash: string | undefined;
+
+    if (data.password) passwordHash = await passwordUtil.hash(data.password);
 
     const userRecord = repository.create({
       name: data.name,
       email: data.email,
-      passwordHash: await passwordUtil.hash(data.password),
+      passwordHash,
     });
 
     const user = await repository.save(userRecord);
 
-    const userRoleRecord = roleUserRepository.create({
-      role,
-      user,
-    });
+    const userRoleRecord: RoleUserEntity[] = [];
 
-    const userRole = await roleUserRepository.save(userRoleRecord);
+    for (const roleId of roleIdsToCreate) {
+      userRoleRecord.push(
+        roleUserRepository.create({
+          role: {
+            id: roleId,
+          },
+          user,
+        })
+      );
+    }
 
-    if (!userRole.user) throw new NotFoundError('User not found');
+    await roleUserRepository.save(userRoleRecord);
 
     return (await repository.findOne({
       where: {
-        id: userRole.user.id,
+        id: user.id,
       },
       relations: {
-        userRoles: {
+        roleUsers: {
           role: true,
         },
       },

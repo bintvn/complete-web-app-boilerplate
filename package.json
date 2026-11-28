@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm run build:shared && turbo run dev --env-mode=loose",
-    "dev:web": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/web",
+    "dev:web": "pnpm run build:shared && pnpm run build:sdk && turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/shared --filter=@complete-web-app-boilerplate/api --filter=@complete-web-app-boilerplate/web",
     "dev:admin": "pnpm run build:shared && pnpm run build:sdk && turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/admin --filter=@complete-web-app-boilerplate/api --filter=@complete-web-app-boilerplate/shared",
     "dev:api": "pnpm run build:shared && turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/api --filter=@complete-web-app-boilerplate/shared",
     "dev:email-template": "turbo run dev --env-mode=loose --filter=@complete-web-app-boilerplate/email-template",
@@ -19,6 +19,7 @@
     "build:shared": "turbo run build --filter=@complete-web-app-boilerplate/shared",
     "build:sdk": "turbo run build --filter=@complete-web-app-boilerplate/sdk",
     "build:admin": "turbo run build --filter=@complete-web-app-boilerplate/admin",
+    "build:web": "turbo run build --filter=@complete-web-app-boilerplate/web",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "typecheck": "turbo run typecheck"
