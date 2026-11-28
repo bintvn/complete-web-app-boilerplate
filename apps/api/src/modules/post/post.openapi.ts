@@ -28,7 +28,7 @@ export function registerPostOpenApi(service: OpenapiService) {
     responses: {
       200: {
         description: 'List of posts.',
-        content: { 'application/json': { schema: postSchema } },
+        content: { 'application/json': { schema: z.array(postSchema) } },
       },
       500: service.errors.internal,
     },
