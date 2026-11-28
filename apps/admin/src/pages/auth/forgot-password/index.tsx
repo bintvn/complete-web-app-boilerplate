@@ -2,7 +2,10 @@ import { Link, useNavigate } from "react-router";
 import { apiRequest } from "@/lib/api";
 import { type FormEvent, useState } from "react";
 import { useDialog } from "@/hooks/use-dialog";
-import { Card, CardContent } from "@complete-web-app-boilerplate/ui/components/card";
+import {
+  Card,
+  CardContent,
+} from "@complete-web-app-boilerplate/ui/components/card";
 import { Logo } from "@/components/logo";
 import { Label } from "@complete-web-app-boilerplate/ui/components/label";
 import { Input } from "@complete-web-app-boilerplate/ui/components/input";
@@ -34,7 +37,11 @@ export default function ForgotPasswordPage() {
         },
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengirim link reset password");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Gagal mengirim link reset password",
+      );
     } finally {
       setLoading(false);
       setEmail("");
@@ -52,14 +59,22 @@ export default function ForgotPasswordPage() {
                   <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
                     <Logo size={24} />
                   </div>
-                  <span className="text-xl">{import.meta.env.VITE_APP_NAME}</span>
+                  <span className="text-xl">
+                    {import.meta.env.VITE_APP_NAME}
+                  </span>
                 </Link>
               </div>
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Lupa password?</h1>
-                <p className="text-muted-foreground text-balance">Masukkan email untuk reset password akun Anda.</p>
+                <p className="text-muted-foreground text-balance">
+                  Masukkan email untuk reset password akun Anda.
+                </p>
               </div>
-              {error && <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">{error}</div>}
+              {error && (
+                <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+                  {error}
+                </div>
+              )}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -72,12 +87,19 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full cursor-pointer"
+                disabled={loading}
+              >
                 {loading ? "Mengirim..." : "Kirim Link Reset"}
               </Button>
               <div className="text-center text-sm">
                 Sudah ingat password?{" "}
-                <Link to="/auth/sign-in" className="underline underline-offset-4">
+                <Link
+                  to="/auth/sign-in"
+                  className="underline underline-offset-4"
+                >
                   Back to Sign In
                 </Link>
               </div>

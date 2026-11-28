@@ -18,16 +18,30 @@ export default function NotFoundPage() {
       <main className="text-foreground flex min-h-svh items-center justify-center px-6 py-12">
         <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
           <p className="text-muted-foreground text-sm font-medium">404</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Page Not Found</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Page Not Found
+          </h1>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            {user ? `Halo ${user.name}! ` : ""}Page you are looking for does not exist or has been removed.
+            {user ? `Halo ${user.name}! ` : ""}Page you are looking for does not
+            exist or has been removed.
           </p>
           <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button type="button" variant="outline" className="cursor-pointer" onClick={() => navigate(-1)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => navigate(-1)}
+            >
               <ArrowLeft className="mr-2 size-4" />
               Back
             </Button>
-            <Button type="button" variant="default" className="cursor-pointer" render={<Link to="/" />} nativeButton={false}>
+            <Button
+              type="button"
+              variant="default"
+              className="cursor-pointer"
+              render={<Link to="/" />}
+              nativeButton={false}
+            >
               {user ? (
                 <>
                   <LayoutDashboardIcon data-icon="inline-start" />

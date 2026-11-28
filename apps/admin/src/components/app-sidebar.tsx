@@ -30,7 +30,15 @@ export type NavGroup = {
   items: SharedNavItem[];
 };
 
-export function AppSidebar({ menu, pathname, user, onSignOut, userMenu, renderBrandLink, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  menu,
+  pathname,
+  user,
+  onSignOut,
+  userMenu,
+  renderBrandLink,
+  ...props
+}: AppSidebarProps) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -42,7 +50,12 @@ export function AppSidebar({ menu, pathname, user, onSignOut, userMenu, renderBr
       </SidebarHeader>
       <SidebarContent>
         {menu.map((group, index) => (
-          <NavMain key={index} label={group.label} items={group.items} pathname={pathname} />
+          <NavMain
+            key={index}
+            label={group.label}
+            items={group.items}
+            pathname={pathname}
+          />
         ))}
       </SidebarContent>
       <div className="px-4 py-2">
@@ -52,7 +65,12 @@ export function AppSidebar({ menu, pathname, user, onSignOut, userMenu, renderBr
         </Badge>
       </div>
       <SidebarFooter>
-        <NavUser name={user.name} email={user.email} onSignOut={onSignOut} menu={userMenu} />
+        <NavUser
+          name={user.name}
+          email={user.email}
+          onSignOut={onSignOut}
+          menu={userMenu}
+        />
       </SidebarFooter>
     </Sidebar>
   );

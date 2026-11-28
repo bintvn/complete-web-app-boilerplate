@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { baseSchema } from "../../core/base.schema.js";
-import { categoryBaseSchema, CategorySchema } from "../category/fields.schema.js";
-import { userBaseSchema, UserBaseSchema } from "../../core/modules/user/user.schema.js";
+import {
+  categoryBaseSchema,
+  CategorySchema,
+} from "../category/fields.schema.js";
+import {
+  userBaseSchema,
+  UserBaseSchema,
+} from "../../core/modules/user/user.schema.js";
 
 export const postBaseSchema = baseSchema
   .extend({

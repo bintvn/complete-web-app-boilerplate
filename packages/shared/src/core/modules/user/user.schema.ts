@@ -1,9 +1,15 @@
 import z from "zod";
 import { baseSchema } from "../../base.schema.js";
-import { SessionBaseSchema, sessionBaseSchema } from "../auth/session.schema.js";
+import {
+  SessionBaseSchema,
+  sessionBaseSchema,
+} from "../auth/session.schema.js";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { commonSchema } from "../../common.schema.js";
-import { postBaseSchema, PostBaseSchema } from "../../../modules/post/schema.js";
+import {
+  postBaseSchema,
+  PostBaseSchema,
+} from "../../../modules/post/schema.js";
 
 extendZodWithOpenApi(z);
 

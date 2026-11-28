@@ -21,9 +21,14 @@ export const commonSchema = {
     .max(255)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?![\s\S])/),
   email: z.string().trim().toLowerCase().max(255).check(z.email()),
-  description: z.string().refine((value) => utf8Encoder.encode(value).byteLength <= maxDescriptionBytes, {
-    error: "Description must be at most 65,535 bytes in UTF-8",
-  }),
+  description: z
+    .string()
+    .refine(
+      (value) => utf8Encoder.encode(value).byteLength <= maxDescriptionBytes,
+      {
+        error: "Description must be at most 65,535 bytes in UTF-8",
+      },
+    ),
   password: z
     .string()
     .min(8, { error: "Password must be at least 8 characters" })
